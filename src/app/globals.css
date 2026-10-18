@@ -1,0 +1,238 @@
+/* App-level layout. Colors, type and spacing come from Tessera's tokens. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--link);
+}
+
+.mb-header {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.mb-logo {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.mb-main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4) var(--space-16);
+}
+
+.mb-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.05;
+  margin: 0 0 var(--space-3);
+  letter-spacing: -0.02em;
+}
+
+.mb-hero p {
+  color: var(--ink-muted);
+  font-size: 1.125rem;
+  margin: 0;
+  max-width: 60ch;
+}
+
+.mb-muted {
+  color: var(--ink-muted);
+}
+
+.mb-small {
+  font-size: 0.875rem;
+}
+
+.mb-row-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
+}
+
+.mb-row-link:last-child {
+  border-bottom: 0;
+}
+
+.mb-row-link:hover strong {
+  text-decoration: underline;
+}
+
+/* Interview room */
+
+.mb-room-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.mb-room-header h1 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.mb-clock {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+.mb-clock[data-over="true"] {
+  color: var(--danger);
+}
+
+.mb-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mb-bubble {
+  max-width: min(85%, 640px);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.mb-bubble[data-speaker="interviewer"] {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.mb-bubble[data-speaker="candidate"] {
+  align-self: flex-end;
+  background: var(--lapis);
+  color: var(--on-lapis);
+}
+
+.mb-bubble[data-pending="true"] {
+  opacity: 0.7;
+}
+
+.mb-bubble-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-1);
+  opacity: 0.7;
+}
+
+.mb-thinking {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-muted);
+}
+
+.mb-composer {
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-4) 0;
+  background: linear-gradient(to bottom, transparent, var(--bg) var(--space-4));
+}
+
+/* Scorecard */
+
+.mb-score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+}
+
+.mb-score strong {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.mb-score span {
+  font-size: 1.25rem;
+  color: var(--ink-muted);
+}
+
+.mb-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.mb-stat strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+}
+
+.mb-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  line-height: 1.6;
+}
+
+.mb-dimension {
+  display: grid;
+  grid-template-columns: 120px auto 1fr;
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.mb-dimension:last-child {
+  border-bottom: 0;
+}
+
+.mb-quote {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-1) var(--space-3);
+  border-left: 3px solid var(--saffron);
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+.mb-section-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  margin: 0 0 var(--space-2);
+}
+
+@media (max-width: 560px) {
+  .mb-dimension {
+    grid-template-columns: 1fr auto;
+  }
+  .mb-dimension > :last-child {
+    grid-column: 1 / -1;
+  }
+}

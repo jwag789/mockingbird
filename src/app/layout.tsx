@@ -1,0 +1,28 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import "@tessera/react/fonts.css";
+import "@tessera/react/styles.css";
+import "./globals.css";
+import { Providers } from "./providers";
+
+export const metadata: Metadata = {
+  title: "Mockingbird",
+  description: "A mock interviewer that reads your resume and the job description, pushes back on vague answers, and scores you with evidence.",
+};
+
+export default function RootLayout({ children }: LayoutProps<"/">) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <Providers>
+          <header className="mb-header">
+            <Link href="/" className="mb-logo">
+              Mockingbird
+            </Link>
+          </header>
+          <main className="mb-main">{children}</main>
+        </Providers>
+      </body>
+    </html>
+  );
+}
