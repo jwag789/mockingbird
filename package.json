@@ -10,6 +10,8 @@
     "db:up": "docker compose up -d --wait",
     "db:migrate": "node --env-file=.env.local --import tsx scripts/migrate.ts",
     "worker": "node --env-file=.env.local --import tsx src/worker/index.ts",
+    "voice": "node --env-file=.env.local --import tsx src/voice/server.ts",
+    "voice:bench": "node --env-file=.env.local --import tsx scripts/voice-bench.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
@@ -21,6 +23,7 @@
     "pg": "^8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "ws": "^8.22.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -28,6 +31,7 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "tsx": "^4.23.15",

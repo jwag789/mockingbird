@@ -46,3 +46,27 @@ describe("answerMetrics", () => {
     expect(combineMetrics([]).words).toBe(0);
   });
 });
+
+describe("talk time and pace", () => {
+  it("only measures pace for spoken answers", () => {
+    expect(answerMetrics("I typed this").wordsPerMinute).toBeNull();
+    const spoken = answerMetrics("one two three four five six seven eight nine ten", { talkMs: 4000 });
+    expect(spoken.talkMs).toBe(4000);
+    expect(spoken.wordsPerMinute).toBe(150);
+  });
+
+  it("combines pace across spoken answers and skips typed ones", () => {
+    const m = combineMetrics([
+      answerMetrics("one two three four five six seven eight nine ten", { talkMs: 4000 }),
+      answerMetrics("a typed answer that has no timing at all"),
+      answerMetrics("one two three four five", { talkMs: 4000 }),
+    ]);
+    expect(m.words).toBe(24);
+    expect(m.talkMs).toBe(8000);
+    expect(m.wordsPerMinute).toBe(113);
+  });
+
+  it("has no pace when nothing was spoken", () => {
+    expect(combineMetrics([answerMetrics("typed")]).talkMs).toBeNull();
+  });
+});

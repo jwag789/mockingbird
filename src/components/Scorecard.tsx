@@ -166,6 +166,18 @@ function SpeakingMetrics({ metrics }: { metrics: AnswerMetrics }) {
           </span>
         </div>
       </Card>
+      {/* Voice answers only; reports from text interviews have no talk time. */}
+      {metrics.wordsPerMinute != null && (
+        <Card variant="flat">
+          <div className="mb-stat">
+            <span className="mb-muted mb-small">Pace</span>
+            <strong>{metrics.wordsPerMinute} words/min</strong>
+            <span className="mb-muted mb-small">
+              {formatDuration(metrics.talkMs ?? 0)} of talk · about 120–160 is easy to follow
+            </span>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
@@ -230,4 +242,9 @@ function QuestionCard({ q, index }: { q: QuestionReport; index: number }) {
       </Stack>
     </Card>
   );
+}
+
+function formatDuration(ms: number) {
+  const s = Math.round(ms / 1000);
+  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
 }

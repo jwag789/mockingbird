@@ -164,6 +164,54 @@ a {
   background: linear-gradient(to bottom, transparent, var(--bg) var(--space-4));
 }
 
+.mb-composer-mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+/* Voice mode */
+
+.mb-voice-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.mb-live-transcript {
+  margin: 0;
+  min-height: 4.65em;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  line-height: 1.55;
+}
+
+.mb-live-transcript[data-empty="true"] {
+  color: var(--ink-muted);
+}
+
+.mb-meter {
+  display: block;
+  width: 96px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.mb-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--success);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
 /* Scorecard */
 
 .mb-score {

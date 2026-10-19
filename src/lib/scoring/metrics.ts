@@ -12,7 +12,16 @@ export type AnswerMetrics = {
   firstPersonPlural: number;
   /** Share of first-person mentions that are "I" rather than "we"; null with no mentions. */
   ownershipRatio: number | null;
+  /** Ms spent speaking, from speech-to-text word timings; null when nothing was spoken (text mode). */
+  talkMs: number | null;
+  /** Words in the spoken answers, the basis for pace. */
+  spokenWords: number;
+  /** Speaking pace across the spoken answers; null when nothing was spoken. */
+  wordsPerMinute: number | null;
 };
+
+/** Present for answers given in voice mode. */
+export type Speech = { talkMs: number };
 
 // "like" only counts when it's set off by commas ("it was, like, slow"),
 // so "I'd like to" and "looks like" don't.
@@ -33,7 +42,7 @@ const PLURAL = /\b(we|we're|we've|we'd|we'll|us|our|ours|ourselves)\b/g;
 
 const count = (text: string, re: RegExp) => text.match(re)?.length ?? 0;
 
-export function answerMetrics(text: string): AnswerMetrics {
+export function answerMetrics(text: string, speech?: Speech): AnswerMetrics {
   const lower = text.toLowerCase().replace(/[’‘]/g, "'");
   const words = lower.split(/\s+/).filter(Boolean).length;
 
@@ -56,6 +65,7 @@ export function answerMetrics(text: string): AnswerMetrics {
     firstPersonSingular: singular,
     firstPersonPlural: plural,
     ownershipRatio: singular + plural ? round2(singular / (singular + plural)) : null,
+    ...pace(speech ? words : 0, speech ? speech.talkMs : null),
   };
 }
 
@@ -64,6 +74,7 @@ export function combineMetrics(all: AnswerMetrics[]): AnswerMetrics {
   const fillers = sum(all.map((m) => m.fillers));
   const singular = sum(all.map((m) => m.firstPersonSingular));
   const plural = sum(all.map((m) => m.firstPersonPlural));
+  const talk = all.filter((m) => m.talkMs != null);
   const fillerBreakdown: Record<string, number> = {};
   for (const m of all) {
     for (const [k, v] of Object.entries(m.fillerBreakdown)) {
@@ -78,6 +89,19 @@ export function combineMetrics(all: AnswerMetrics[]): AnswerMetrics {
     firstPersonSingular: singular,
     firstPersonPlural: plural,
     ownershipRatio: singular + plural ? round2(singular / (singular + plural)) : null,
+    ...pace(
+      sum(talk.map((m) => m.spokenWords)),
+      talk.length ? sum(talk.map((m) => m.talkMs!)) : null,
+    ),
+  };
+}
+
+// Pace counts pauses inside an answer, the way a listener hears it.
+function pace(spokenWords: number, talkMs: number | null) {
+  return {
+    talkMs,
+    spokenWords,
+    wordsPerMinute: talkMs ? Math.round(spokenWords / (talkMs / 60_000)) : null,
   };
 }
 

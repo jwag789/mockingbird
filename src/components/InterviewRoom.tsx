@@ -1,10 +1,23 @@
 "use client";
 
-import { Alert, Button, Card, Inline, Progress, Spinner, Stack, Stepper, Textarea } from "@tessera/react";
+import {
+  Alert,
+  Button,
+  Card,
+  Inline,
+  Progress,
+  SegmentedControl,
+  Spinner,
+  Stack,
+  Stepper,
+  Textarea,
+} from "@tessera/react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { fetchJson, type SessionResponse } from "@/lib/client-types";
 import { STAGES, STAGE_LABELS } from "@/lib/interview/stages";
+import { useVoiceCall } from "./useVoiceCall";
+import { VoicePanel } from "./VoicePanel";
 
 const STEPS = STAGES.map((s) => ({ id: s, label: STAGE_LABELS[s] }));
 
@@ -14,10 +27,42 @@ export function InterviewRoom({ id }: { id: string }) {
   const [pendingAnswer, setPendingAnswer] = useState<string | null>(null);
   const [ending, setEnding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"text" | "voice">("text");
 
   const load = useCallback(async () => {
     setData(await fetchJson<SessionResponse>(`/api/sessions/${id}`));
   }, [id]);
+
+  // Voice is another way in and out of the same turns: the voice server
+  // saves them through the same conductor, and we refetch when it does.
+  const voice = useVoiceCall(id, {
+    onAnswer: setPendingAnswer,
+    onSessionUpdated: () => {
+      load()
+        .catch((err) => setError(err.message))
+        .finally(() => setPendingAnswer(null));
+    },
+  });
+
+  // Hang up (and release the mic) once the interview is over, however it
+  // ended. If it ended by voice, let the closing line play first: the voice
+  // server hangs up itself once it has.
+  const stopVoice = voice.stop;
+  const ended = data != null && data.session.status !== "active";
+  const replying = voice.status === "thinking" || voice.status === "speaking";
+  useEffect(() => {
+    if (ended && !replying) stopVoice();
+  }, [ended, replying, stopVoice]);
+
+  function switchMode(next: string) {
+    if (next === "voice") {
+      setMode("voice");
+      void voice.start();
+    } else {
+      voice.stop();
+      setMode("text");
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +137,8 @@ export function InterviewRoom({ id }: { id: string }) {
   const active = session.status === "active";
   const current = session.questions[session.state.questionIndex];
   const stepIndex = active ? STAGES.indexOf(current.stage) : STEPS.length;
+  // Don't switch modes while an answer is with the interviewer.
+  const busy = !!pendingAnswer || voice.status === "thinking";
 
   return (
     <Stack gap={6}>
@@ -139,24 +186,42 @@ export function InterviewRoom({ id }: { id: string }) {
       {active ? (
         <div className="mb-composer">
           <Stack gap={3}>
-            <Textarea
-              label="Your answer"
-              hint="⌘ Enter to send. Answer the way you would out loud."
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              onKeyDown={onKeyDown}
-              rows={5}
-              autoResize
-              disabled={!!pendingAnswer}
-            />
-            <Inline justify="between">
-              <Button variant="ghost" onClick={end} loading={ending} disabled={!!pendingAnswer}>
-                End interview
-              </Button>
-              <Button variant="primary" onClick={send} disabled={!answer.trim() || !!pendingAnswer}>
-                Send answer
-              </Button>
-            </Inline>
+            <div className="mb-composer-mode">
+              <SegmentedControl
+                label="Answer by"
+                size="sm"
+                value={mode}
+                onChange={switchMode}
+                options={[
+                  { value: "text", label: "Typing", disabled: busy && mode !== "text" },
+                  { value: "voice", label: "Speaking", disabled: busy && mode !== "voice" },
+                ]}
+              />
+            </div>
+            {mode === "voice" ? (
+              <VoicePanel voice={voice} onEnd={end} ending={ending} />
+            ) : (
+              <>
+                <Textarea
+                  label="Your answer"
+                  hint="⌘ Enter to send. Answer the way you would out loud."
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  onKeyDown={onKeyDown}
+                  rows={5}
+                  autoResize
+                  disabled={!!pendingAnswer}
+                />
+                <Inline justify="between">
+                  <Button variant="ghost" onClick={end} loading={ending} disabled={!!pendingAnswer}>
+                    End interview
+                  </Button>
+                  <Button variant="primary" onClick={send} disabled={!answer.trim() || !!pendingAnswer}>
+                    Send answer
+                  </Button>
+                </Inline>
+              </>
+            )}
           </Stack>
         </div>
       ) : (
