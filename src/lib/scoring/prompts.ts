@@ -74,7 +74,11 @@ ${perQuestion}
 </questions>
 
 <speaking_metrics>
-Words: ${m.words}. Filler words: ${m.fillersPer100Words} per 100 words. "I" vs "we" share: ${m.ownershipRatio ?? "n/a"}.
+Words: ${m.words}. Filler words: ${m.fillersPer100Words} per 100 words. "I" vs "we" share: ${m.ownershipRatio ?? "n/a"}.${
+    m.wordsPerMinute != null
+      ? ` Spoken answers: ${Math.round((m.talkMs ?? 0) / 1000)} seconds of talk at ${m.wordsPerMinute} words per minute.`
+      : ""
+  }
 </speaking_metrics>
 
 Write the scorecard summary.`;

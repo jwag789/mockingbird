@@ -5,6 +5,7 @@ import type { PlannedQuestion, Turn } from "../interview/types";
 import { verifyQuotes } from "./evidence";
 import { answerMetrics, combineMetrics } from "./metrics";
 import { SCORER_SYSTEM, SUMMARY_SYSTEM, scoreQuestionPrompt, summaryPrompt } from "./prompts";
+import { getTalkTimes } from "./talk-time";
 import {
   DIMENSIONS,
   QuestionScoreOutput,
@@ -25,9 +26,16 @@ export async function scoreSession(sessionId: string): Promise<Report> {
     .map((question) => ({ question, thread: turns.filter((t) => t.questionId === question.id) }))
     .filter(({ thread }) => thread.some((t) => t.speaker === "candidate"));
 
-  const questions = await Promise.all(
+  const judged = await Promise.all(
     answered.map(({ question, thread }) => scoreQuestion(question, thread, session.roleTitle)),
   );
+  // Read talk times after the slow scoring calls: the voice server saves the
+  // final answer's just after that answer ends the interview.
+  const talkTimes = await getTalkTimes(sessionId);
+  const questions: QuestionReport[] = judged.map((q, i) => ({
+    ...q,
+    metrics: threadMetrics(answered[i].thread, talkTimes),
+  }));
 
   const metrics = combineMetrics(questions.map((q) => q.metrics));
   const dimensionAverages = averageByDimension(questions);
@@ -78,7 +86,7 @@ export async function scoreQuestion(
   question: PlannedQuestion,
   thread: Turn[],
   roleTitle: string,
-): Promise<QuestionReport> {
+): Promise<Omit<QuestionReport, "metrics">> {
   const candidateText = thread
     .filter((t) => t.speaker === "candidate")
     .map((t) => t.content)
@@ -115,8 +123,19 @@ export async function scoreQuestion(
     strengths: raw.strengths,
     improvements: raw.improvements,
     strongerAnswer: raw.strongerAnswer,
-    metrics: answerMetrics(candidateText),
   };
+}
+
+/** Counted per answer, so a question answered partly by voice and partly typed gets pace from the spoken part. */
+export function threadMetrics(thread: Turn[], talkTimes: Map<number, number>) {
+  return combineMetrics(
+    thread
+      .filter((t) => t.speaker === "candidate")
+      .map((t) => {
+        const talkMs = talkTimes.get(t.seq);
+        return answerMetrics(t.content, talkMs == null ? undefined : { talkMs });
+      }),
+  );
 }
 
 function averageByDimension(questions: QuestionReport[]): Record<Dimension, number> {

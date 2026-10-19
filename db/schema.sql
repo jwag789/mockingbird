@@ -57,3 +57,13 @@ create table if not exists jobs (
 );
 
 create index if not exists jobs_queued_idx on jobs (run_at, id) where status = 'queued';
+
+-- Voice answers only: how long the candidate spoke, from the speech-to-text
+-- word timings. Kept beside turns so text and voice share one transcript.
+create table if not exists answer_audio (
+  session_id uuid not null,
+  seq        int  not null,
+  talk_ms    int  not null check (talk_ms >= 0),
+  primary key (session_id, seq),
+  foreign key (session_id, seq) references turns (session_id, seq) on delete cascade
+);
