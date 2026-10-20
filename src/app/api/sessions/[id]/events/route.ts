@@ -1,6 +1,7 @@
 import { Client } from "pg";
-import { isUuid } from "@/lib/api";
+import { errorResponse, isUuid, requireUser } from "@/lib/api";
 import { pool } from "@/lib/db";
+import { assertOwner } from "@/lib/interview/conductor";
 import { PROGRESS_CHANNEL, type ScoringProgress } from "@/lib/scoring/progress";
 
 const HEARTBEAT_MS = 15_000;
@@ -15,6 +16,11 @@ const SAFETY_POLL_MS = 5_000;
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!isUuid(id)) return new Response("Not found", { status: 404 });
+  try {
+    await assertOwner(id, (await requireUser(req)).id);
+  } catch (err) {
+    return errorResponse(err);
+  }
 
   const listener = new Client({ connectionString: process.env.DATABASE_URL });
   await listener.connect();

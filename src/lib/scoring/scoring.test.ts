@@ -34,6 +34,12 @@ describe("answerMetrics", () => {
     expect(m.fillerBreakdown).toEqual({ um: 1, like: 1, basically: 1 });
   });
 
+  it("counts hedging phrases", () => {
+    const m = answerMetrics("I think it worked. Maybe we could have, I'm not really sure, but I guess it was probably fine.");
+    expect(m.hedgeBreakdown).toEqual({ "I think": 1, "I guess": 1, "I'm not sure": 1, maybe: 1, probably: 1 });
+    expect(m.hedgesPer100Words).toBeCloseTo((5 / 19) * 100, 1);
+  });
+
   it("measures I vs we", () => {
     const m = answerMetrics("We planned it, but I wrote the migration and I ran the rollout for our team.");
     expect(m.firstPersonSingular).toBe(2);

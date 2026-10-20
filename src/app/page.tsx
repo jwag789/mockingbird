@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { connection } from "next/server";
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import { Badge, Card, Stack } from "@tessera/react";
 import { SetupForm } from "@/components/SetupForm";
+import { getUser } from "@/lib/auth";
 import { listSessions, type SessionStatus } from "@/lib/interview/conductor";
 
 const STATUS: Record<SessionStatus, { label: string; tone: "neutral" | "brand" | "success" | "warning" | "danger" }> = {
@@ -35,9 +36,10 @@ export default function Home() {
 }
 
 async function PastInterviews() {
-  // Always read fresh from the database, never from the build-time cache.
-  await connection();
-  const sessions = await listSessions(10);
+  // Reading the request's cookies also keeps this out of the build-time cache.
+  const user = await getUser(await headers());
+  if (!user) return null;
+  const sessions = await listSessions(user.id, 10);
   if (sessions.length === 0) return null;
 
   return (

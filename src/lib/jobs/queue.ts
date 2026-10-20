@@ -1,6 +1,6 @@
 import type { Pool, PoolClient } from "pg";
 
-export type JobType = "score-session";
+export type JobType = "score-session" | "build-plan" | "refresh-resources";
 
 export type Job = {
   id: string;
@@ -69,11 +69,12 @@ export async function fail(db: Pool, job: Job, error: unknown): Promise<boolean>
   return final;
 }
 
-/** Put back jobs whose worker died mid-run. */
+/** Put back jobs whose worker died mid-run. Resource refreshes legitimately run long. */
 export async function requeueStale(db: Pool, staleAfterSeconds = 300): Promise<number> {
   const { rowCount } = await db.query(
     `update jobs set status = 'queued', locked_at = null, updated_at = now()
-      where status = 'running' and locked_at < now() - make_interval(secs => $1)`,
+      where status = 'running'
+        and locked_at < now() - make_interval(secs => case when type = 'refresh-resources' then 3600 else $1 end)`,
     [staleAfterSeconds],
   );
   return rowCount ?? 0;

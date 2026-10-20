@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchJson, type SessionResponse } from "@/lib/client-types";
 import type { ScoringProgress } from "@/lib/scoring/progress";
+import { PracticePlan } from "./practice/PracticePlan";
 import { ScoringLive } from "./ScoringLive";
 import { STAGE_LABELS } from "@/lib/interview/stages";
 import type { AnswerMetrics } from "@/lib/scoring/metrics";
@@ -132,6 +133,8 @@ export function Scorecard({ id }: { id: string }) {
           </ul>
         </Card>
       </div>
+
+      <PracticePlan sessionId={id} />
 
       <Card title="By dimension" eyebrow="Behavioral and technical questions" variant="flat">
         <Stack gap={4}>

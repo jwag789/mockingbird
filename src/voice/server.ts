@@ -3,10 +3,12 @@
 // conductor (the same submitAnswer() as text mode), and streams the
 // interviewer's reply back as Aura-2 audio.
 import Anthropic from "@anthropic-ai/sdk";
+import type { IncomingHttpHeaders } from "node:http";
 import { WebSocketServer, type RawData, type WebSocket } from "ws";
+import { getUser } from "../lib/auth";
 import { ClaudeOutputError } from "../lib/claude";
 import { pool } from "../lib/db";
-import { ConflictError, NotFoundError, getSession, getTurns, submitAnswer } from "../lib/interview/conductor";
+import { ConflictError, NotFoundError, assertOwner, getSession, getTurns, submitAnswer } from "../lib/interview/conductor";
 import { recordTalkTime } from "../lib/scoring/talk-time";
 import { VoiceCall } from "./call";
 import { connectAura, connectFlux } from "./deepgram";
@@ -45,7 +47,7 @@ wss.on("connection", (socket, req) => {
   let onMessage: MessageHandler = (...args) => early.push(args);
   socket.on("message", (data, isBinary) => onMessage(data, isBinary));
 
-  openCall(socket, sessionId, sampleRate)
+  openCall(socket, sessionId, sampleRate, req.headers)
     .then((handler) => {
       if (!handler) return;
       onMessage = handler;
@@ -57,8 +59,19 @@ wss.on("connection", (socket, req) => {
     });
 });
 
-async function openCall(socket: WebSocket, sessionId: string, sampleRate: number): Promise<MessageHandler | void> {
+async function openCall(
+  socket: WebSocket,
+  sessionId: string,
+  sampleRate: number,
+  headers: IncomingHttpHeaders,
+): Promise<MessageHandler | void> {
   if (!MIC_SAMPLE_RATES.includes(sampleRate)) return socket.close(1008, "Unsupported sample rate");
+  // The browser sends the app's session cookie with the upgrade request
+  // (cookies are per host, not per port), so the same sign-in covers voice.
+  const user = await getUser(toHeaders(headers));
+  if (!user) return socket.close(1008, "Sign in to continue");
+  const owned = await assertOwner(sessionId, user.id).then(() => true, () => false);
+  if (!owned) return socket.close(1008, "No such interview");
   const session = await getSession(sessionId).catch(() => null);
   if (!session) return socket.close(1008, "No such interview");
   if (session.session.status !== "active") return socket.close(1008, "This interview has ended");
@@ -155,3 +168,11 @@ async function shutdown() {
 }
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+
+function toHeaders(incoming: IncomingHttpHeaders): Headers {
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(incoming)) {
+    if (value != null) headers.set(key, Array.isArray(value) ? value.join(", ") : value);
+  }
+  return headers;
+}

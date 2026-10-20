@@ -6,8 +6,10 @@
 //   npm run voice            # terminal 1
 //   npm run voice:bench      # terminal 2
 //
-// The throwaway session is deleted at the end.
+// The throwaway user and session are deleted at the end.
+import { randomUUID } from "node:crypto";
 import WebSocket from "ws";
+import { auth } from "../src/lib/auth";
 import { pool } from "../src/lib/db";
 import { startSession } from "../src/lib/interview/conductor";
 import { MIC_SAMPLE_RATE, TTS_SAMPLE_RATE, type ServerMessage, type TurnLatency } from "../src/voice/protocol";
@@ -38,14 +40,29 @@ async function main() {
 
   console.log("Synthesizing candidate answers…");
   const answers = await Promise.all(ANSWERS.map((text) => synthesize(apiKey, text)));
+  // The voice server needs a signed-in owner, so sign up a throwaway user
+  // and send its session cookie the way the browser would.
+  const signUp = await auth.api.signUpEmail({
+    body: { name: "Voice bench", email: `bench-${randomUUID()}@mockingbird.invalid`, password: randomUUID() },
+    asResponse: true,
+  });
+  const { user } = (await signUp.json()) as { user: { id: string } };
+  const cookie = signUp.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+
   console.log("Planning a throwaway interview…");
-  const sessionId = await startSession({ resume: { kind: "text", text: RESUME }, jobDescription: JD, targetMinutes: 20 });
+  const sessionId = await startSession({
+    userId: user.id,
+    resume: { kind: "text", text: RESUME },
+    jobDescription: JD,
+    targetMinutes: 20,
+  });
 
   try {
-    const { results, firstQuestionMs, bargeInMs } = await runCall(sessionId, answers);
+    const { results, firstQuestionMs, bargeInMs } = await runCall(sessionId, answers, cookie);
     report(results, firstQuestionMs, bargeInMs);
   } finally {
-    await pool.query("delete from sessions where id = $1", [sessionId]);
+    // Deleting the user cascades to the session and its turns.
+    await pool.query(`delete from "user" where id = $1`, [user.id]);
     await pool.end();
   }
 }
@@ -67,9 +84,9 @@ async function synthesize(apiKey: string, text: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
-function runCall(sessionId: string, answers: Buffer[]) {
+function runCall(sessionId: string, answers: Buffer[], cookie: string) {
   return new Promise<{ results: Result[]; firstQuestionMs: number; bargeInMs: number | null }>((resolve, reject) => {
-    const ws = new WebSocket(`${VOICE_URL}?session=${sessionId}&rate=${MIC_SAMPLE_RATE}`, { headers: { Origin: ORIGIN } });
+    const ws = new WebSocket(`${VOICE_URL}?session=${sessionId}&rate=${MIC_SAMPLE_RATE}`, { headers: { Origin: ORIGIN, Cookie: cookie } });
     const results: Result[] = [];
     let queue: Buffer = Buffer.alloc(0);
     let openedAt = 0;

@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
-import { errorResponse } from "@/lib/api";
+import { errorResponse, requireUser } from "@/lib/api";
 import { listSessions, startSession } from "@/lib/interview/conductor";
 import type { ResumeInput } from "@/lib/interview/plan";
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024;
 const LENGTHS = [10, 20, 30];
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    return NextResponse.json({ sessions: await listSessions() });
+    const user = await requireUser(req);
+    return NextResponse.json({ sessions: await listSessions(user.id) });
   } catch (err) {
     return errorResponse(err);
   }
@@ -16,6 +17,9 @@ export async function GET() {
 
 /** Start an interview: multipart form with jobDescription, targetMinutes, and resumeText or resumeFile. */
 export async function POST(req: Request) {
+  const user = await requireUser(req).catch(() => null);
+  if (!user) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
+
   const form = await req.formData();
   const jobDescription = String(form.get("jobDescription") ?? "").trim();
   const targetMinutes = Number(form.get("targetMinutes"));
@@ -37,7 +41,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const id = await startSession({ resume, jobDescription, targetMinutes });
+    const id = await startSession({ userId: user.id, resume, jobDescription, targetMinutes });
     return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     return errorResponse(err);

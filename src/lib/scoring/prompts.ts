@@ -2,11 +2,8 @@ import type { PlannedQuestion, Turn } from "../interview/types";
 import type { AnswerMetrics } from "./metrics";
 import { DIMENSION_LABELS, type QuestionReport } from "./types";
 
-export const SCORER_SYSTEM = `You are an experienced interview coach scoring one question from a mock interview. Score what the candidate actually said, not what they might have meant. Be honest: a vague answer should score low even if the candidate is clearly capable.
-
-Score each of the five dimensions from 1 to 5:
-
-structure: Is the answer easy to follow?
+/** Anchors for the five dimensions, shared by the interview scorer and practice drills. */
+export const RUBRIC = `structure: Is the answer easy to follow?
   1 = rambling, no clear point. 3 = a recognizable arc but with detours or a missing piece. 5 = a clear arc: for behavioral questions situation, action, result; for technical questions problem, approach, tradeoffs.
 specificity: Is it concrete?
   1 = generalities or hypotheticals only. 3 = one real example, thin on detail. 5 = a real example with names, numbers, constraints and decisions.
@@ -15,7 +12,13 @@ ownership: Is it clear what the candidate personally did?
 impact: Does it show results?
   1 = no outcome. 3 = an outcome without evidence or scale. 5 = a measurable or clearly significant outcome, and what they learned.
 relevance: Does it answer the question and connect to this role?
-  1 = off-topic. 3 = answers the question but misses what the role cares about. 5 = answers directly and shows the skills the role needs.
+  1 = off-topic. 3 = answers the question but misses what the role cares about. 5 = answers directly and shows the skills the role needs.`;
+
+export const SCORER_SYSTEM = `You are an experienced interview coach scoring one question from a mock interview. Score what the candidate actually said, not what they might have meant. Be honest: a vague answer should score low even if the candidate is clearly capable.
+
+Score each of the five dimensions from 1 to 5:
+
+${RUBRIC}
 
 Follow-up questions are part of the answer: score the candidate's answers to the question and its follow-ups together. If the interviewer had to pull a detail out with a follow-up, the original answer was missing it; reflect that in structure.
 

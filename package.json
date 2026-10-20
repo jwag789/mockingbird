@@ -13,12 +13,15 @@
     "voice": "node --env-file=.env.local --import tsx src/voice/server.ts",
     "voice:bench": "node --env-file=.env.local --import tsx scripts/voice-bench.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "resources:refresh": "node --env-file=.env.local --import tsx scripts/refresh-resources.ts",
+    "claim-interviews": "node --env-file=.env.local --import tsx scripts/claim-interviews.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",
     "@tessera/react": "file:vendor/tessera-react-0.1.0.tgz",
     "@tessera/tokens": "file:vendor/tessera-tokens-0.1.0.tgz",
+    "better-auth": "^1.7.11",
     "next": "16.4.2",
     "pg": "^8.23.1",
     "react": "19.3.0",

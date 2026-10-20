@@ -3,6 +3,7 @@ import Link from "next/link";
 import "@tessera/react/fonts.css";
 import "@tessera/react/styles.css";
 import "./globals.css";
+import { UserMenu } from "@/components/UserMenu";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="mb-logo">
               Mockingbird
             </Link>
+            <UserMenu />
           </header>
           <main className="mb-main">{children}</main>
         </Providers>

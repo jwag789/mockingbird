@@ -513,3 +513,252 @@ a {
   }
   .mb-hl { background-size: 100% 100%; }
 }
+
+/* Header nav and account */
+
+.mb-nav {
+  display: flex;
+  gap: var(--space-5);
+  margin-left: var(--space-8);
+  margin-right: auto;
+}
+
+.mb-nav a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.mb-nav a:hover {
+  color: var(--ink);
+}
+
+.mb-user {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+
+.mb-auth {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-10);
+  align-items: center;
+  min-height: 70vh;
+}
+
+@media (max-width: 760px) {
+  .mb-auth {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+  .mb-nav {
+    margin-left: var(--space-4);
+    gap: var(--space-3);
+  }
+}
+
+/* Practice plans */
+
+.mb-plan-focus {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.25;
+  margin: var(--space-1) 0 var(--space-3);
+}
+
+.mb-task {
+  animation: mb-rise 450ms var(--ease-out) both;
+}
+
+.mb-task-done {
+  opacity: 0.72;
+}
+
+.mb-task-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.mb-task-num {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--lapis-soft);
+  color: var(--lapis);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.mb-task-why {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.mb-quote-tag {
+  display: inline-block;
+  margin-left: var(--space-2);
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.mb-video {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.mb-video iframe,
+.mb-video-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+
+.mb-video:has(iframe) {
+  grid-template-columns: 1fr;
+}
+
+.mb-video-thumb {
+  padding: 0;
+  cursor: pointer;
+}
+
+.mb-video-thumb img {
+  object-fit: cover;
+  transition: transform 300ms var(--ease-out);
+}
+
+.mb-video-thumb:hover img {
+  transform: scale(1.04);
+}
+
+.mb-play {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  border-radius: var(--radius-full);
+  background: rgb(0 0 0 / 0.65);
+}
+
+.mb-play::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 54%;
+  transform: translate(-50%, -50%);
+  border-left: 14px solid white;
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+}
+
+.mb-resource-meta,
+.mb-article {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  line-height: 1.45;
+}
+
+.mb-article {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: inherit;
+  text-decoration: none;
+}
+
+.mb-article:hover {
+  border-color: var(--lapis);
+}
+
+.mb-prompt {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.mb-attempt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  animation: mb-rise 400ms var(--ease-out) both;
+}
+
+.mb-attempt[data-improved="true"] {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+
+.mb-attempt-score {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+}
+
+.mb-attempt-score strong {
+  font-size: 2rem;
+}
+
+.mb-vote {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  cursor: pointer;
+  filter: grayscale(1);
+  opacity: 0.7;
+}
+
+.mb-vote[aria-pressed="true"] {
+  filter: none;
+  opacity: 1;
+  border-color: var(--lapis);
+}
+
+@media (max-width: 560px) {
+  .mb-video {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Wins: a beaten drill and the "Beaten" chip. Themes can set --win-gradient. */
+.mb-win {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--win-gradient, var(--saffron));
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  box-shadow: var(--shadow-glow);
+}
+
+.mb-attempt[data-improved="true"] {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--success-soft), var(--success-soft)) padding-box,
+    var(--win-gradient, linear-gradient(var(--success), var(--success))) border-box;
+}

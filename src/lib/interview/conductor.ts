@@ -34,6 +34,7 @@ export class NotFoundError extends Error {}
 export class ConflictError extends Error {}
 
 export async function startSession(args: {
+  userId: string;
   resume: ResumeInput;
   jobDescription: string;
   targetMinutes: number;
@@ -47,9 +48,9 @@ export async function startSession(args: {
 
   return withTransaction(async (db) => {
     const { rows } = await db.query<{ id: string }>(
-      `insert into sessions (role_title, job_description, target_minutes, plan, state)
-       values ($1, $2, $3, $4, $5) returning id`,
-      [plan.roleTitle, args.jobDescription, args.targetMinutes, plan, state],
+      `insert into sessions (user_id, role_title, job_description, target_minutes, plan, state)
+       values ($1, $2, $3, $4, $5, $6) returning id`,
+      [args.userId, plan.roleTitle, args.jobDescription, args.targetMinutes, plan, state],
     );
     const id = rows[0].id;
     await insertTurn(db, id, 0, "interviewer", first.id, "question", opening);
@@ -229,7 +230,19 @@ async function insertTurn(
   );
 }
 
-export async function listSessions(limit = 20) {
+/**
+ * Throw NotFoundError unless the session belongs to this user. Callers get a
+ * 404 either way, so other users' session ids can't be probed.
+ */
+export async function assertOwner(sessionId: string, userId: string): Promise<void> {
+  const { rowCount } = await pool.query("select 1 from sessions where id = $1 and user_id = $2", [
+    sessionId,
+    userId,
+  ]);
+  if (!rowCount) throw new NotFoundError("Interview not found");
+}
+
+export async function listSessions(userId: string, limit = 20) {
   const { rows } = await pool.query<{
     id: string;
     created_at: Date;
@@ -240,8 +253,9 @@ export async function listSessions(limit = 20) {
     `select s.id, s.created_at, s.status, s.role_title,
             (r.summary->>'overallScore')::float as overall
        from sessions s left join reports r on r.session_id = s.id
-      order by s.created_at desc limit $1`,
-    [limit],
+      where s.user_id = $1
+      order by s.created_at desc limit $2`,
+    [userId, limit],
   );
   return rows.map((r) => ({
     id: r.id,

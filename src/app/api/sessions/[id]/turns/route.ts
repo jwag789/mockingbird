@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { errorResponse, isUuid } from "@/lib/api";
-import { submitAnswer } from "@/lib/interview/conductor";
+import { errorResponse, isUuid, requireUser } from "@/lib/api";
+import { assertOwner, submitAnswer } from "@/lib/interview/conductor";
 
 const MAX_ANSWER_CHARS = 8000;
 
@@ -17,6 +17,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   try {
+    const user = await requireUser(req);
+    await assertOwner(id, user.id);
     await submitAnswer(id, answer);
     return new NextResponse(null, { status: 204 });
   } catch (err) {

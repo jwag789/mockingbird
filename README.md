@@ -1,6 +1,6 @@
 # Mockingbird
 
-An AI mock interviewer. Give it your resume and a job description and it plans the interview a hiring manager for that role would run. You answer by typing or out loud. It pushes back when an answer is vague, then scores every answer against a rubric, citing quotes from what you actually said.
+An AI mock interviewer. Give it your resume and a job description and it plans the interview a hiring manager for that role would run. You answer by typing or out loud. It pushes back when an answer is vague, then scores every answer against a rubric, citing quotes from what you actually said. Then it builds a **practice plan** from the scorecard: vetted videos and articles for what held you back, and drills that re-test exactly that weakness against your interview score.
 
 Built with Next.js 16, TypeScript, PostgreSQL, Claude, Deepgram (streaming speech-to-text and text-to-speech), and [Tessera](https://github.com/jwag789/tessera), my design system.
 
@@ -30,6 +30,32 @@ See `src/lib/jobs/queue.ts` and `src/worker/index.ts`.
 **Some metrics are counted, not judged.** Filler words and the "I" vs "we" ratio are counted deterministically in `src/lib/scoring/metrics.ts`. The filler counter skips ordinary uses such as "I'd like to". Spoken answers also get talk time and pace (words per minute), measured from the speech-to-text word timings.
 
 **Concurrent answers can't corrupt a session.** Claude runs outside the database transaction. The write then locks the session row and checks that no other answer landed in the meantime, and returns a 409 if one did.
+
+## Practice plans
+
+```
+scorecard ──▶ signals (code) ──▶ coach (Claude) ──▶ validation (code) ──▶ tasks: watch · read · drill · challenge
+                  │                    │                                        │
+       what's weak, counted      picks only from the                  drills re-scored on the weak
+       and thresholded           vetted resource library              dimension vs. the interview score
+```
+
+**Code decides what's weak; Claude writes the tasks.** `src/lib/practice/signals.ts` (pure, unit tested) turns a scorecard into weaknesses: dimensions averaging under 3.5 across the behavioral and technical answers, weak technical answers, and counted delivery problems like hedging ("I guess", "maybe", "I'm not sure"), filler words and pace. The coach (`src/lib/practice/coach.ts`) turns those into 3–6 tasks, and code checks every one before it's saved:
+- A watch or read task must use a resource from the library, of the right kind.
+- Quotes must appear verbatim in the answer.
+- Drills must target a real question and dimension.
+- Every weak dimension gets a drill, even if Claude left one out.
+
+**Links can't be made up.** The coach only sees a catalog of resource ids. The library is filled by a weekly job (`src/lib/practice/resources/`):
+- **Videos:** YouTube Data API search per skill, limited to the last 2 years, 3–25 minutes, with view and likes-per-view floors. YouTube hides dislikes, so quality is reach, approval and recency. Claude then rejects course pitches, clickbait and off-topic videos.
+- **Articles:** Claude's web search finds candidates. A pick is kept only if its URL appeared in the actual search results and it loads as a web page when fetched.
+- **Ratings:** users' helpful/unhelpful votes re-rank resources for everyone.
+
+**Practice is measured.** A drill re-asks one of the interview's own questions with a constraint ("answer again, and end with one number that shows the result"), and is scored on just the weak dimension with the same rubric anchors. A challenge is a fresh written design problem with a design rubric. Beating your interview score completes the task.
+
+## Accounts
+
+[Better Auth](https://www.better-auth.com), self-hosted and free, with users and sessions in the same Postgres. Email and password work out of the box. Google and GitHub sign-in turn on when their keys are set. Every interview, plan and task belongs to a user, and every route checks ownership, returning a 404 rather than leaking that another user's id exists. The voice server checks the same session cookie on the WebSocket upgrade.
 
 ## Voice mode
 
@@ -74,22 +100,28 @@ Once the reply text exists, the interviewer starts speaking in under 0.2 s, well
 
 ## Running it
 
-Requirements: Node 20+, Docker, an Anthropic API key, and a Deepgram API key for voice mode.
+Requirements: Node 20+, Docker, an Anthropic API key, a Deepgram API key for voice mode, and a YouTube Data API key for practice videos (optional; without it, plans use articles, drills and challenges).
 
 ```bash
 npm install
-cp .env.example .env.local    # then add ANTHROPIC_API_KEY and DEEPGRAM_API_KEY
+cp .env.example .env.local    # then add your keys and a BETTER_AUTH_SECRET
 npm run db:up                 # Postgres on port 5433
-npm run db:migrate
+npm run db:migrate            # auth tables + app schema
 npm run dev                   # http://localhost:3000
-npm run worker                # in a second terminal: scores finished interviews
+npm run worker                # in a second terminal: scoring, practice plans, weekly resource refresh
 npm run voice                 # in a third terminal: the voice server on ws://localhost:3001
+```
+
+```bash
+npm run resources:refresh                     # fill the resource library now instead of waiting for the weekly job
+npm run resources:refresh -- system-design    # or just some skills
+npm run claim-interviews -- you@example.com   # give interviews from before accounts to your account
 ```
 
 Voice mode needs a browser with microphone access. Headphones work best. Run the voice server with `VOICE_DEBUG=1` to log every transcript and state change.
 
 ```bash
-npm test            # engine, quote verification, metrics, the voice call state machine
+npm test            # engine, quote verification, metrics, practice signals, the voice call state machine
 npm run typecheck
 npm run voice:bench # voice latency, end to end (needs the voice server running)
 ```
@@ -101,11 +133,12 @@ Tessera isn't on npm yet, so it's vendored as tarballs in `vendor/`.
 ```
 src/lib/interview/   plan generation, prompts, the engine (state machine), the conductor (I/O)
 src/lib/scoring/     rubric scorer, quote verification, speaking metrics
+src/lib/practice/    weakness signals, coach, drills, resource library and ingestion
 src/lib/jobs/        Postgres job queue
 src/worker/          background worker process
 src/voice/           voice server: call state machine, Deepgram clients, WebSocket protocol
 src/app/api/         route handlers
-src/components/      setup form, interview room, scorecard
+src/components/      setup form, interview room, scorecard, practice
 db/schema.sql        schema
 ```
 
@@ -113,4 +146,6 @@ db/schema.sql        schema
 
 - Voice: start the judge on Flux's early end-of-turn signal (`EagerEndOfTurn`) and discard it if the candidate keeps talking. This needs a judge call that doesn't commit, since `submitAnswer()` saves the turn
 - An eval set for the scorer: human-scored answers, and agreement between the model and human scores
-- Progress across sessions: trends per dimension over time
+- Dashboard: readiness per target role, dimension trends over time, and an interview date that paces the practice plan
+- Billing: Stripe subscriptions with a free tier
+- Coding interviews: in-app editor, sandboxed execution and a problem bank

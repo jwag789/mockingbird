@@ -1,10 +1,24 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
+import { getUser, type AuthUser } from "./auth";
 import { ClaudeOutputError } from "./claude";
 import { ConflictError, NotFoundError } from "./interview/conductor";
 
+export class UnauthorizedError extends Error {}
+
+/** The signed-in user, or an UnauthorizedError that errorResponse turns into a 401. */
+export async function requireUser(req: Request): Promise<AuthUser> {
+  const user = await getUser(req.headers);
+  if (!user) throw new UnauthorizedError("Sign in to continue.");
+  return user;
+}
+
 /** Map domain errors to HTTP responses so route handlers stay small. */
 export function errorResponse(err: unknown): NextResponse {
+  // Next.js signals things like "this route is dynamic" by throwing; let those through.
+  unstable_rethrow(err);
+  if (err instanceof UnauthorizedError) return json(401, err.message);
   if (err instanceof NotFoundError) return json(404, err.message);
   if (err instanceof ConflictError) return json(409, err.message);
   if (err instanceof Anthropic.RateLimitError) return json(503, "The interviewer is busy. Try again in a moment.");

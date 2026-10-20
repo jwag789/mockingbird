@@ -4,7 +4,7 @@ import type { z } from "zod";
 
 export const MODEL = "claude-opus-5-5";
 
-const client = new Anthropic();
+export const client = new Anthropic();
 
 export class ClaudeOutputError extends Error {}
 

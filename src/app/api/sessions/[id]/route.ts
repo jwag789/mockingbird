@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { errorResponse, isUuid } from "@/lib/api";
+import { errorResponse, isUuid, requireUser } from "@/lib/api";
 import { pool } from "@/lib/db";
 import type { SessionView } from "@/lib/client-types";
-import { getSession } from "@/lib/interview/conductor";
+import { assertOwner, getSession } from "@/lib/interview/conductor";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!isUuid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
   try {
+    const user = await requireUser(req);
+    await assertOwner(id, user.id);
     const { session, turns } = await getSession(id);
     const { rows } = await pool.query(
       "select model, summary, questions, metrics from reports where session_id = $1",

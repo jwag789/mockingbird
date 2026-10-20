@@ -12,6 +12,10 @@ export type AnswerMetrics = {
   firstPersonPlural: number;
   /** Share of first-person mentions that are "I" rather than "we"; null with no mentions. */
   ownershipRatio: number | null;
+  /** Hedging phrases ("I guess", "maybe", "I'm not sure"): the text signal for sounding unsure. */
+  hedges: number;
+  hedgesPer100Words: number;
+  hedgeBreakdown: Record<string, number>;
   /** Ms spent speaking, from speech-to-text word timings; null when nothing was spoken (text mode). */
   talkMs: number | null;
   /** Words in the spoken answers, the basis for pace. */
@@ -37,6 +41,19 @@ const FILLER_PATTERNS: Array<[label: string, pattern: RegExp]> = [
   ["literally", /\bliterally\b/g],
 ];
 
+const HEDGE_PATTERNS: Array<[label: string, pattern: RegExp]> = [
+  ["I think", /\bi think\b/g],
+  ["I guess", /\bi guess\b/g],
+  ["I feel like", /\bi feel like\b/g],
+  ["I'm not sure", /\bi'?m not (?:really )?sure\b/g],
+  ["maybe", /\bmaybe\b/g],
+  ["probably", /\bprobably\b/g],
+  ["perhaps", /\bperhaps\b/g],
+  ["hopefully", /\bhopefully\b/g],
+  ["I suppose", /\bi suppose\b/g],
+  ["might have", /\bmight have\b/g],
+];
+
 const SINGULAR = /\b(i|i'm|i've|i'd|i'll|me|my|mine|myself)\b/g;
 const PLURAL = /\b(we|we're|we've|we'd|we'll|us|our|ours|ourselves)\b/g;
 
@@ -46,13 +63,8 @@ export function answerMetrics(text: string, speech?: Speech): AnswerMetrics {
   const lower = text.toLowerCase().replace(/[’‘]/g, "'");
   const words = lower.split(/\s+/).filter(Boolean).length;
 
-  const fillerBreakdown: Record<string, number> = {};
-  let fillers = 0;
-  for (const [label, re] of FILLER_PATTERNS) {
-    const n = count(lower, re);
-    if (n > 0) fillerBreakdown[label] = n;
-    fillers += n;
-  }
+  const { total: fillers, breakdown: fillerBreakdown } = tally(lower, FILLER_PATTERNS);
+  const { total: hedges, breakdown: hedgeBreakdown } = tally(lower, HEDGE_PATTERNS);
 
   const singular = count(lower, SINGULAR);
   const plural = count(lower, PLURAL);
@@ -65,6 +77,9 @@ export function answerMetrics(text: string, speech?: Speech): AnswerMetrics {
     firstPersonSingular: singular,
     firstPersonPlural: plural,
     ownershipRatio: singular + plural ? round2(singular / (singular + plural)) : null,
+    hedges,
+    hedgesPer100Words: words ? round1((hedges / words) * 100) : 0,
+    hedgeBreakdown,
     ...pace(speech ? words : 0, speech ? speech.talkMs : null),
   };
 }
@@ -74,13 +89,11 @@ export function combineMetrics(all: AnswerMetrics[]): AnswerMetrics {
   const fillers = sum(all.map((m) => m.fillers));
   const singular = sum(all.map((m) => m.firstPersonSingular));
   const plural = sum(all.map((m) => m.firstPersonPlural));
+  const hedges = sum(all.map((m) => m.hedges ?? 0));
   const talk = all.filter((m) => m.talkMs != null);
-  const fillerBreakdown: Record<string, number> = {};
-  for (const m of all) {
-    for (const [k, v] of Object.entries(m.fillerBreakdown)) {
-      fillerBreakdown[k] = (fillerBreakdown[k] ?? 0) + v;
-    }
-  }
+  const fillerBreakdown = mergeCounts(all.map((m) => m.fillerBreakdown));
+  // Reports saved before hedges were counted have no breakdown.
+  const hedgeBreakdown = mergeCounts(all.map((m) => m.hedgeBreakdown ?? {}));
   return {
     words,
     fillers,
@@ -89,11 +102,33 @@ export function combineMetrics(all: AnswerMetrics[]): AnswerMetrics {
     firstPersonSingular: singular,
     firstPersonPlural: plural,
     ownershipRatio: singular + plural ? round2(singular / (singular + plural)) : null,
+    hedges,
+    hedgesPer100Words: words ? round1((hedges / words) * 100) : 0,
+    hedgeBreakdown,
     ...pace(
       sum(talk.map((m) => m.spokenWords)),
       talk.length ? sum(talk.map((m) => m.talkMs!)) : null,
     ),
   };
+}
+
+function tally(text: string, patterns: Array<[string, RegExp]>) {
+  const breakdown: Record<string, number> = {};
+  let total = 0;
+  for (const [label, re] of patterns) {
+    const n = count(text, re);
+    if (n > 0) breakdown[label] = n;
+    total += n;
+  }
+  return { total, breakdown };
+}
+
+function mergeCounts(all: Array<Record<string, number>>): Record<string, number> {
+  const merged: Record<string, number> = {};
+  for (const counts of all) {
+    for (const [k, v] of Object.entries(counts)) merged[k] = (merged[k] ?? 0) + v;
+  }
+  return merged;
 }
 
 // Pace counts pauses inside an answer, the way a listener hears it.
