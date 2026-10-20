@@ -8,8 +8,14 @@ import { useCallback, useSyncExternalStore } from "react";
 export function useNow(intervalMs: number): number | null {
   const subscribe = useCallback(
     (onChange: () => void) => {
+      // Tick once right away: hydration renders the server snapshot (null),
+      // and a long interval would otherwise leave that showing for a while.
+      const first = setTimeout(onChange, 0);
       const timer = setInterval(onChange, intervalMs);
-      return () => clearInterval(timer);
+      return () => {
+        clearTimeout(first);
+        clearInterval(timer);
+      };
     },
     [intervalMs],
   );

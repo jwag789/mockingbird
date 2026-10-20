@@ -4,6 +4,7 @@ import "@tessera/react/fonts.css";
 import "@tessera/react/styles.css";
 import "./canopy.css";
 import "./globals.css";
+import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/components/UserMenu";
 import { Providers } from "./providers";
 
@@ -18,8 +19,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <Providers>
           <header className="mb-header">
-            <Link href="/" className="mb-logo">
-              Mockingbird
+            <Link href="/" className="mb-logo" aria-label="Mockingbird home">
+              <Logo height={40} />
             </Link>
             <UserMenu />
           </header>

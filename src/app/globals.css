@@ -28,12 +28,13 @@ a {
 }
 
 .mb-logo {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 800;
+  display: inline-flex;
   color: var(--ink);
   text-decoration: none;
-  letter-spacing: -0.01em;
+}
+
+.mb-logo svg {
+  display: block;
 }
 
 .mb-main {
@@ -1144,8 +1145,9 @@ a {
   .mb-header {
     padding: var(--space-3) var(--space-4);
   }
-  .mb-logo {
-    font-size: 1.05rem;
+  .mb-logo svg {
+    height: 32px;
+    width: auto;
   }
   .mb-nav {
     margin-left: var(--space-3);
@@ -1160,4 +1162,17 @@ a {
 
 .mb-dash-table {
   overflow-x: auto;
+}
+
+/* Logo accent: Canopy's brighter teal, so it stands apart from the ink. */
+[data-brand="canopy"] {
+  --logo-accent: #138a76;
+}
+@media (prefers-color-scheme: dark) {
+  [data-brand="canopy"]:not([data-theme="light"]) {
+    --logo-accent: #3fbfa8;
+  }
+}
+[data-brand="canopy"][data-theme="dark"] {
+  --logo-accent: #3fbfa8;
 }
