@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import { structured } from "../claude";
 import { pool, withTransaction } from "../db";
 import { enqueue } from "../jobs/queue";
+import type { ScoringProgress } from "../scoring/progress";
 import { CLOSING_LINE, initialState, nextStep, stageTransition } from "./engine";
 import { generatePlan, type ResumeInput } from "./plan";
 import { interviewerSystemPrompt, judgeTurnPrompt } from "./prompts";
@@ -25,6 +26,7 @@ export type Session = {
   plan: InterviewPlan;
   state: InterviewState;
   endedAt: string | null;
+  progress: ScoringProgress | null;
 };
 
 export class NotFoundError extends Error {}
@@ -57,7 +59,7 @@ export async function startSession(args: {
 
 export async function getSession(id: string): Promise<{ session: Session; turns: Turn[] }> {
   const { rows } = await pool.query(
-    `select id, created_at, status, role_title, job_description, target_minutes, plan, state, ended_at
+    `select id, created_at, status, role_title, job_description, target_minutes, plan, state, ended_at, progress
        from sessions where id = $1`,
     [id],
   );
@@ -73,6 +75,7 @@ export async function getSession(id: string): Promise<{ session: Session; turns:
     plan: r.plan,
     state: r.state,
     endedAt: r.ended_at?.toISOString() ?? null,
+    progress: r.progress,
   };
   return { session, turns: await getTurns(id) };
 }
