@@ -165,7 +165,7 @@ export async function submitAnswer(sessionId: string, answer: string): Promise<v
       reply = {
         kind: "closing",
         questionId: question.id,
-        content: parting ? `${parting}\n\n${CLOSING_LINE}` : CLOSING_LINE,
+        content: `${parting ?? "Thanks for your time today."}\n\n${CLOSING_LINE}`,
       };
       break;
     }

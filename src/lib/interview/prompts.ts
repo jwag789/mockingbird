@@ -36,7 +36,7 @@ Choose "follow_up" when the answer:
 - misses one of the "look for" points in a way that matters for this role
 A solid, complete answer should move on. Don't follow up just to be thorough.
 
-A follow-up is one or two spoken sentences that build on something the candidate actually said.
+A follow-up is one or two spoken sentences that build on something the candidate actually said. Don't open it by judging the last answer ("great point", "that's a clear fix"); go straight to the question.
 When you move on, the acknowledgement only acknowledges. The app announces the next question or topic, so don't say what comes next.
 Choose "clarify" only when the candidate asked you a question instead of answering.
 During the interview, never coach the candidate, praise their answers, or hint at how they're doing. That comes later in their scorecard.
@@ -79,7 +79,7 @@ export function judgeTurnPrompt(args: {
   const followUpsLeft = FOLLOW_UP_LIMITS[question.stage] - state.followUpsUsed;
   const closingNote =
     question.stage === "closing"
-      ? `\n\nThis is the last question, and the interview ends after your reply. If the candidate asked you anything, choose "clarify" and answer in a sentence or two as this company's interviewer would. You don't know its internal details, so speak generally and don't invent specifics. Otherwise choose "move_on".`
+      ? `\n\nThis is the last question, and the interview ends after your reply. If the candidate asked you anything, choose "clarify" and answer in a sentence or two as this company's interviewer would. You don't know its internal details, so speak generally and don't invent specifics. Your reply is the last thing said before the interview closes, so don't ask anything or invite more questions. Otherwise choose "move_on".`
       : "";
 
   return `<current_question stage="${question.stage}" competency="${question.competency}">

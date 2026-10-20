@@ -23,8 +23,8 @@ export const MAX_CLARIFICATIONS = 2;
 const DEFAULT_INTRO = "To start, could you walk me through your background and what draws you to this role?";
 const DEFAULT_CLOSING = "That's all the questions I have. Is there anything you'd like to add, or anything you'd like to ask me?";
 
-export const CLOSING_LINE =
-  "Thanks for your time today. That's the end of the interview. Your scorecard will be ready in a minute.";
+/** Always the last thing said. The thanks comes from the interviewer's own reply when there is one. */
+export const CLOSING_LINE = "That's the end of the interview. Your scorecard will be ready in a minute.";
 
 /** How many behavioral and technical questions fit in the time. */
 export function questionMix(targetMinutes: number): { behavioral: number; technical: number } {
