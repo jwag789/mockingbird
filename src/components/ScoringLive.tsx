@@ -3,6 +3,7 @@
 import { Badge, Card, Stepper } from "@tessera/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { STAGE_LABELS } from "@/lib/interview/stages";
+import { useNow } from "./useNow";
 import type { QuestionProgress, ScoringProgress } from "@/lib/scoring/progress";
 import type { Dimension } from "@/lib/scoring/types";
 
@@ -168,11 +169,8 @@ function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: 
 }
 
 function Elapsed({ since }: { since: string }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(t);
-  }, []);
+  const now = useNow(100);
+  if (now == null) return null;
   const s = Math.max(0, (now - new Date(since).getTime()) / 1000);
   return <span className="mb-clock">{s.toFixed(1)}s</span>;
 }

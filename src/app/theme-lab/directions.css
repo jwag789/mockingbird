@@ -1,0 +1,330 @@
+/*
+ * Candidate Mockingbird themes, written the way Tessera themes are built:
+ * one [data-brand] block of tokens each. Light mode only for now; the pick
+ * gets a designed dark mode when it moves into Tessera.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Manrope:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+/* Graphite: deep navy and slate, one coral accent for wins. Calm and
+   trustworthy; the coral makes progress feel like an event. */
+[data-brand="graphite"] {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-sunken: #eceef2;
+  --line: #dde1e8;
+  --line-strong: #8a93a6;
+  --ink: #111827;
+  --ink-muted: #556070;
+  --lapis: #1e2b4a;
+  --lapis-hover: #16203a;
+  --lapis-soft: #e7ebf5;
+  --lapis-deep: #121a30;
+  --lapis-glow: rgba(30, 43, 74, 0.25);
+  --on-lapis: #ffffff;
+  --on-lapis-deep: #ffffff;
+  --saffron: #ff7a59;
+  --saffron-deep: #e85c3a;
+  --saffron-soft: #ffe9e2;
+  --on-saffron: #111827;
+  --tile-ground: #121a30;
+  --tile-1: #1e2b4a;
+  --tile-2: #2b3a60;
+  --tile-3: #3b4f82;
+  --tile-4: #e7ebf5;
+  --success: #13795b;
+  --success-soft: #dff3ea;
+  --warning: #8a5300;
+  --danger: #c03a2b;
+  --danger-soft: #fce7e4;
+  --on-danger: #ffffff;
+  --inverse-accent: #ff9d82;
+  --focus: #3b4f82;
+  --link: #2b4fa8;
+  --overlay: rgba(17, 24, 39, 0.5);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.05);
+  --shadow-md: 0 8px 24px -8px rgba(17, 24, 39, 0.12), 0 1px 2px rgba(17, 24, 39, 0.04);
+  --shadow-lg: 0 24px 48px -16px rgba(17, 24, 39, 0.22);
+  --shadow-glow: 0 8px 24px -8px rgba(255, 122, 89, 0.55);
+  --shadow-tile: 0 1px 0 rgba(17, 24, 39, 0.06), 0 10px 24px -12px rgba(17, 24, 39, 0.25);
+  --shadow-tile-lg: 0 20px 40px -16px rgba(17, 24, 39, 0.3);
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  color-scheme: light;
+}
+
+/* Evergreen: deep teal-green on warm paper with an amber accent. Growth and
+   steadiness; stands apart from the blue and purple most AI apps use. */
+[data-brand="evergreen"] {
+  --bg: #f6f4ef;
+  --surface: #fffefb;
+  --surface-sunken: #eeeae1;
+  --line: #e2dccf;
+  --line-strong: #8f887a;
+  --ink: #14201c;
+  --ink-muted: #59645f;
+  --lapis: #0e5e52;
+  --lapis-hover: #0a4a41;
+  --lapis-soft: #e0efea;
+  --lapis-deep: #083b34;
+  --lapis-glow: rgba(14, 94, 82, 0.25);
+  --on-lapis: #ffffff;
+  --on-lapis-deep: #ffffff;
+  --saffron: #f2b13c;
+  --saffron-deep: #d48f17;
+  --saffron-soft: #fdf0d5;
+  --on-saffron: #14201c;
+  --tile-ground: #083b34;
+  --tile-1: #0e5e52;
+  --tile-2: #137567;
+  --tile-3: #2a8f7f;
+  --tile-4: #e0efea;
+  --success: #1c7c4f;
+  --success-soft: #def2e6;
+  --warning: #8a5a00;
+  --danger: #b5392c;
+  --danger-soft: #fae6e2;
+  --on-danger: #ffffff;
+  --inverse-accent: #f7c76b;
+  --focus: #137567;
+  --link: #0e6b5d;
+  --overlay: rgba(20, 32, 28, 0.5);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 1px 2px rgba(20, 32, 28, 0.06);
+  --shadow-md: 0 10px 28px -12px rgba(48, 38, 18, 0.18), 0 1px 2px rgba(48, 38, 18, 0.05);
+  --shadow-lg: 0 28px 56px -20px rgba(48, 38, 18, 0.26);
+  --shadow-glow: 0 8px 24px -8px rgba(14, 94, 82, 0.45);
+  --shadow-tile: 3px 3px 0 0 #0e5e52;
+  --shadow-tile-lg: 6px 6px 0 0 #0e5e52;
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  color-scheme: light;
+}
+
+/* Canopy: Evergreen's calm teal-on-paper everywhere, with Dusk's soft, round
+   cards, and a warm amber-to-coral gradient spent only on wins. */
+[data-brand="canopy"] {
+  --bg: #f6f4ef;
+  --surface: #fffefb;
+  --surface-sunken: #eeeae1;
+  --line: #e2dccf;
+  --line-strong: #8f887a;
+  --ink: #14201c;
+  --ink-muted: #59645f;
+  --lapis: #0e5e52;
+  --lapis-hover: #0a4a41;
+  --lapis-soft: #e0efea;
+  --lapis-deep: #083b34;
+  --lapis-glow: rgba(14, 94, 82, 0.25);
+  --on-lapis: #ffffff;
+  --on-lapis-deep: #ffffff;
+  --saffron: #f2b13c;
+  --saffron-deep: #d48f17;
+  --saffron-soft: #fdf0d5;
+  --on-saffron: #14201c;
+  --tile-ground: #083b34;
+  --tile-1: #0e5e52;
+  --tile-2: #137567;
+  --tile-3: #2a8f7f;
+  --tile-4: #e0efea;
+  --success: #1c7c4f;
+  --success-soft: #def2e6;
+  --warning: #8a5a00;
+  --danger: #b5392c;
+  --danger-soft: #fae6e2;
+  --on-danger: #ffffff;
+  --inverse-accent: #f7c76b;
+  --focus: #137567;
+  --link: #0e6b5d;
+  --overlay: rgba(20, 32, 28, 0.5);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --shadow-sm: 0 1px 2px rgba(20, 32, 28, 0.06);
+  --shadow-md: 0 12px 32px -14px rgba(14, 94, 82, 0.2), 0 1px 2px rgba(48, 38, 18, 0.04);
+  --shadow-lg: 0 28px 60px -20px rgba(14, 94, 82, 0.28);
+  --shadow-glow: 0 10px 28px -8px rgba(255, 138, 91, 0.5);
+  --shadow-tile: 0 12px 32px -12px rgba(14, 94, 82, 0.24);
+  --shadow-tile-lg: 0 24px 48px -16px rgba(14, 94, 82, 0.3);
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Reserved for wins only: score bumps, beaten drills, "+1 vs interview". */
+  --win-gradient: linear-gradient(120deg, #f7c24b, #ff8a5b);
+  color-scheme: light;
+}
+
+/* Dusk: violet with a sunset pink-to-orange for wins, big soft radii. The
+   friendliest of the three, closest to the reference dashboard. */
+[data-brand="dusk"] {
+  --bg: #f4f3fa;
+  --surface: #ffffff;
+  --surface-sunken: #eeecf7;
+  --line: #e3e0f0;
+  --line-strong: #8e89a8;
+  --ink: #15132b;
+  --ink-muted: #5b5877;
+  --lapis: #5b47e0;
+  --lapis-hover: #4a37c9;
+  --lapis-soft: #ece9ff;
+  --lapis-deep: #2e2390;
+  --lapis-glow: rgba(91, 71, 224, 0.3);
+  --on-lapis: #ffffff;
+  --on-lapis-deep: #ffffff;
+  --saffron: #ff8a5b;
+  --saffron-deep: #f0663a;
+  --saffron-soft: #ffeee6;
+  --on-saffron: #15132b;
+  --tile-ground: #2e2390;
+  --tile-1: #5b47e0;
+  --tile-2: #7a68f0;
+  --tile-3: #f06bc4;
+  --tile-4: #ece9ff;
+  --success: #12805c;
+  --success-soft: #def5ec;
+  --warning: #8f5200;
+  --danger: #cc3b52;
+  --danger-soft: #fde7eb;
+  --on-danger: #ffffff;
+  --inverse-accent: #ffb38f;
+  --focus: #7a68f0;
+  --link: #5b47e0;
+  --overlay: rgba(21, 19, 43, 0.5);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --shadow-sm: 0 1px 2px rgba(46, 35, 144, 0.06);
+  --shadow-md: 0 12px 32px -12px rgba(46, 35, 144, 0.16);
+  --shadow-lg: 0 28px 60px -20px rgba(46, 35, 144, 0.28);
+  --shadow-glow: 0 10px 28px -8px rgba(240, 107, 196, 0.5);
+  --shadow-tile: 0 12px 32px -12px rgba(46, 35, 144, 0.22);
+  --shadow-tile-lg: 0 24px 48px -16px rgba(46, 35, 144, 0.3);
+  --font-display: "Plus Jakarta Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  color-scheme: light;
+}
+
+/* The lab page itself */
+.mb-lab {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: auto;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+.mb-lab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  background: #0b0e18;
+  color: #fff;
+  font-family: "Instrument Sans", system-ui, sans-serif;
+  font-size: 0.875rem;
+}
+
+.mb-lab-bar button {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mb-lab-bar button[aria-pressed="true"] {
+  background: #fff;
+  color: #0b0e18;
+}
+
+.mb-lab-brand {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+.mb-lab-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.mb-lab-header nav {
+  display: flex;
+  gap: var(--space-5);
+  margin-right: auto;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.mb-lab-header nav span:first-child {
+  color: var(--ink);
+}
+
+.mb-lab-note {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-muted);
+  font-size: 0.9375rem;
+}
+
+.mb-win {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--saffron);
+  color: var(--on-saffron);
+  font-weight: 700;
+  box-shadow: var(--shadow-glow);
+}
+
+[data-brand="dusk"] .mb-win {
+  background: linear-gradient(120deg, #f06bc4, #ff9a5b);
+  color: #fff;
+}
+
+[data-brand="canopy"] .mb-win {
+  background: var(--win-gradient);
+  color: var(--ink);
+}
+
+/* A beaten drill gets the win treatment too. */
+[data-brand="canopy"] .mb-attempt[data-improved="true"] {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--win-gradient) border-box;
+  border: 2px solid transparent;
+  box-shadow: var(--shadow-glow);
+}
+
+.mb-lab-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .mb-lab-row {
+    grid-template-columns: 1fr;
+  }
+}

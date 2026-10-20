@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { fetchJson, type SessionResponse } from "@/lib/client-types";
+import { useNow } from "./useNow";
 import { STAGES, STAGE_LABELS } from "@/lib/interview/stages";
 import { useVoiceCall } from "./useVoiceCall";
 import { VoicePanel } from "./VoicePanel";
@@ -243,11 +244,8 @@ export function InterviewRoom({ id }: { id: string }) {
 }
 
 function Clock({ startedAt, targetMinutes }: { startedAt: string; targetMinutes: number }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
+  const now = useNow(1000);
+  if (now == null) return null;
   const elapsed = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
   const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const ss = String(elapsed % 60).padStart(2, "0");
