@@ -762,3 +762,8 @@ a {
     linear-gradient(var(--success-soft), var(--success-soft)) padding-box,
     var(--win-gradient, linear-gradient(var(--success), var(--success))) border-box;
 }
+
+/* Canopy keeps one warm gradient for wins only: score bumps, beaten drills. */
+[data-brand="canopy"] {
+  --win-gradient: linear-gradient(120deg, #f7c24b, #ff8a5b);
+}

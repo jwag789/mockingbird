@@ -4,5 +4,5 @@ import { ThemeProvider } from "@tessera/react";
 import type { ReactNode } from "react";
 
 export function Providers({ children }: { children: ReactNode }) {
-  return <ThemeProvider defaultTheme="system">{children}</ThemeProvider>;
+  return <ThemeProvider defaultTheme="system" brand="canopy">{children}</ThemeProvider>;
 }
