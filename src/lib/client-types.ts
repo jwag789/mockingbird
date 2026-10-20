@@ -1,6 +1,7 @@
 // Shapes the browser receives from GET /api/sessions/[id].
 import type { SessionStatus } from "./interview/conductor";
 import type { InterviewState, Stage, Turn } from "./interview/types";
+import type { ScoringProgress } from "./scoring/progress";
 import type { Report } from "./scoring/types";
 
 export type SessionView = {
@@ -18,6 +19,8 @@ export type SessionResponse = {
   session: SessionView;
   turns: Turn[];
   report: Report | null;
+  /** Live scoring progress, while the worker is scoring. */
+  progress: ScoringProgress | null;
 };
 
 export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {

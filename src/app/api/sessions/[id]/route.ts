@@ -29,6 +29,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       session: view,
       turns,
       report: rows[0] ?? null,
+      progress: session.progress,
     });
   } catch (err) {
     return errorResponse(err);

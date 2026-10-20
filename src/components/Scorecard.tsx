@@ -4,6 +4,8 @@ import { Alert, Badge, Button, Card, Progress, Spinner, Stack } from "@tessera/r
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchJson, type SessionResponse } from "@/lib/client-types";
+import type { ScoringProgress } from "@/lib/scoring/progress";
+import { ScoringLive } from "./ScoringLive";
 import { STAGE_LABELS } from "@/lib/interview/stages";
 import type { AnswerMetrics } from "@/lib/scoring/metrics";
 import type { Dimension, QuestionReport } from "@/lib/scoring/types";
@@ -21,25 +23,58 @@ const tone = (score: number) => (score >= 4 ? "success" : score >= 3 ? "warning"
 
 export function Scorecard({ id }: { id: string }) {
   const [data, setData] = useState<SessionResponse | null>(null);
+  const [progress, setProgress] = useState<ScoringProgress | null>(null);
+  const [revealed, setRevealed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Poll until the worker has written the report.
+  // Stream scoring progress over SSE until the report exists. If the stream
+  // fails, fall back to polling.
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
     let cancelled = false;
-    async function tick() {
-      try {
-        const next = await fetchJson<SessionResponse>(`/api/sessions/${id}`);
-        if (cancelled) return;
-        setData(next);
-        if (!next.report && next.session.status !== "failed") timer = setTimeout(tick, 2000);
-      } catch (err) {
-        if (!cancelled) setError((err as Error).message);
-      }
-    }
-    tick();
+    let events: EventSource | null = null;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const load = async () => {
+      const next = await fetchJson<SessionResponse>(`/api/sessions/${id}`);
+      if (cancelled) return null;
+      setData(next);
+      if (next.progress) setProgress(next.progress);
+      return next;
+    };
+
+    const finish = async () => {
+      events?.close();
+      const next = await load();
+      if (next?.report) setRevealed(true);
+    };
+
+    const poll = async () => {
+      const next = await load();
+      if (next && !next.report && next.session.status !== "failed") timer = setTimeout(poll, 2000);
+      else if (next?.report) setRevealed(true);
+    };
+
+    load()
+      .then((first) => {
+        if (!first || first.report || ["active", "failed"].includes(first.session.status)) return;
+        events = new EventSource(`/api/sessions/${id}/events`);
+        events.onmessage = (e) => {
+          const msg = JSON.parse(e.data) as { status: string; progress: ScoringProgress | null };
+          setProgress(msg.progress);
+          if (msg.status === "scored" || msg.status === "failed") finish().catch((err) => setError(err.message));
+        };
+        // Also fires when the server closes the stream after scoring; poll()
+        // then just picks up the finished report.
+        events.onerror = () => {
+          events?.close();
+          if (!cancelled) poll().catch((err) => setError(err.message));
+        };
+      })
+      .catch((err) => !cancelled && setError(err.message));
+
     return () => {
       cancelled = true;
+      events?.close();
       clearTimeout(timer);
     };
   }, [id]);
@@ -63,30 +98,19 @@ export function Scorecard({ id }: { id: string }) {
       </Alert>
     );
   }
-  if (!report) {
-    return (
-      <Card variant="flat">
-        <Stack gap={3} align="center">
-          <Spinner size={28} label="Scoring" />
-          <p className="mb-muted" style={{ margin: 0 }}>
-            Scoring each answer against the role. This takes about a minute.
-          </p>
-        </Stack>
-      </Card>
-    );
-  }
+  if (!report) return <ScoringLive progress={progress} />;
 
   const { summary, questions, metrics } = report;
 
   return (
-    <Stack gap={6}>
+    <Stack gap={6} className={revealed ? "mb-reveal" : undefined}>
       <Stack gap={2}>
         <span className="mb-muted mb-small">
           {session.roleTitle} ·{" "}
           {new Date(session.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric" })}
         </span>
         <div className="mb-score">
-          <strong>{summary.overallScore.toFixed(1)}</strong>
+          <strong>{revealed ? <CountUp to={summary.overallScore} /> : summary.overallScore.toFixed(1)}</strong>
           <span>/ 5</span>
         </div>
         <p style={{ fontSize: "1.25rem", margin: 0 }}>{summary.headline}</p>
@@ -247,4 +271,23 @@ function QuestionCard({ q, index }: { q: QuestionReport; index: number }) {
 function formatDuration(ms: number) {
   const s = Math.round(ms / 1000);
   return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
+}
+
+/** Count the overall score up from zero when it's first revealed. */
+function CountUp({ to }: { to: number }) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setValue(to);
+      return;
+    }
+    const start = performance.now();
+    let frame = requestAnimationFrame(function step(now) {
+      const t = Math.min(1, (now - start) / 1100);
+      setValue(to * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) frame = requestAnimationFrame(step);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [to]);
+  return <>{value.toFixed(1)}</>;
 }

@@ -67,3 +67,7 @@ create table if not exists answer_audio (
   primary key (session_id, seq),
   foreign key (session_id, seq) references turns (session_id, seq) on delete cascade
 );
+
+-- Live scoring progress the worker writes as it goes, so the scorecard page
+-- can show each answer being scored. Null until the worker picks the job up.
+alter table sessions add column if not exists progress jsonb;

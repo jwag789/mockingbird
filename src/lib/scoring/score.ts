@@ -4,6 +4,7 @@ import { getSession } from "../interview/conductor";
 import type { PlannedQuestion, Turn } from "../interview/types";
 import { verifyQuotes } from "./evidence";
 import { answerMetrics, combineMetrics } from "./metrics";
+import { excerpt, finishQuestion, setPhase, startProgress } from "./progress";
 import { SCORER_SYSTEM, SUMMARY_SYSTEM, scoreQuestionPrompt, summaryPrompt } from "./prompts";
 import { getTalkTimes } from "./talk-time";
 import {
@@ -26,9 +27,32 @@ export async function scoreSession(sessionId: string): Promise<Report> {
     .map((question) => ({ question, thread: turns.filter((t) => t.questionId === question.id) }))
     .filter(({ thread }) => thread.some((t) => t.speaker === "candidate"));
 
-  const judged = await Promise.all(
-    answered.map(({ question, thread }) => scoreQuestion(question, thread, session.roleTitle)),
+  await startProgress(
+    sessionId,
+    answered.map(({ question, thread }) => ({
+      id: question.id,
+      question: question.text,
+      stage: question.stage,
+      competency: question.competency,
+      excerpt: excerpt(candidateText(thread)),
+      state: "scoring",
+    })),
   );
+
+  // All questions are scored in parallel; each one reports as soon as it lands.
+  const judged = await Promise.all(
+    answered.map(async ({ question, thread }, i) => {
+      const q = await scoreQuestion(question, thread, session.roleTitle);
+      await finishQuestion(sessionId, i, {
+        score: round1(q.dimensions.reduce((a, d) => a + d.score, 0) / q.dimensions.length),
+        dimensions: Object.fromEntries(q.dimensions.map((d) => [d.dimension, d.score])),
+        quotes: [...new Set(q.dimensions.flatMap((d) => d.evidence))].slice(0, 4),
+        rejectedQuotes: q.rejectedQuotes,
+      });
+      return q;
+    }),
+  );
+  await setPhase(sessionId, "summary");
   // Read talk times after the slow scoring calls: the voice server saves the
   // final answer's just after that answer ends the interview.
   const talkTimes = await getTalkTimes(sessionId);
@@ -79,6 +103,7 @@ export async function scoreSession(sessionId: string): Promise<Report> {
     ],
   );
   await pool.query("update sessions set status = 'scored' where id = $1", [sessionId]);
+  await setPhase(sessionId, "done");
   return report;
 }
 
@@ -87,10 +112,7 @@ export async function scoreQuestion(
   thread: Turn[],
   roleTitle: string,
 ): Promise<Omit<QuestionReport, "metrics">> {
-  const candidateText = thread
-    .filter((t) => t.speaker === "candidate")
-    .map((t) => t.content)
-    .join("\n\n");
+  const answerText = candidateText(thread);
 
   const raw = await structured({
     schema: QuestionScoreOutput,
@@ -103,7 +125,7 @@ export async function scoreQuestion(
   const dimensions: DimensionScore[] = DIMENSIONS.map((dimension) => {
     const d = raw.dimensions.find((x) => x.dimension === dimension);
     if (!d) throw new ClaudeOutputError(`Scorer skipped the "${dimension}" dimension`);
-    const { verified, rejected } = verifyQuotes(d.evidence, candidateText);
+    const { verified, rejected } = verifyQuotes(d.evidence, answerText);
     rejectedQuotes += rejected.length;
     return {
       dimension,
@@ -151,3 +173,10 @@ function averageByDimension(questions: QuestionReport[]): Record<Dimension, numb
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
+
+function candidateText(thread: Turn[]): string {
+  return thread
+    .filter((t) => t.speaker === "candidate")
+    .map((t) => t.content)
+    .join("\n\n");
+}
