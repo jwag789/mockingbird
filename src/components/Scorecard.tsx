@@ -159,7 +159,7 @@ export function Scorecard({ id }: { id: string }) {
       </Stack>
 
       <div>
-        <Link href="/">
+        <Link href="/new">
           <Button variant="secondary">Start another interview</Button>
         </Link>
       </div>

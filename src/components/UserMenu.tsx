@@ -14,8 +14,9 @@ export function UserMenu() {
   return (
     <>
       <nav className="mb-nav">
-        <Link href="/">Interviews</Link>
+        <Link href="/">Dashboard</Link>
         <Link href="/practice">Practice</Link>
+        <Link href="/new">New interview</Link>
       </nav>
       <DropdownMenu
       trigger={

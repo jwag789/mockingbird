@@ -33,7 +33,7 @@ export function PracticeBoard() {
         title="No practice yet"
         description="Finish a mock interview and Mockingbird builds a plan from your scorecard: what to watch, read and re-answer."
         actions={
-          <Link href="/">
+          <Link href="/new">
             <Button variant="primary">Start an interview</Button>
           </Link>
         }
@@ -93,7 +93,9 @@ export function PracticeBoard() {
                 <h2 className="mb-section-title" style={{ marginTop: "var(--space-1)" }}>{plan.focus}</h2>
               </div>
               {tasks.map((t) => (
-                <TaskCard key={t.id} task={t} />
+                <div key={t.id} id={`task-${t.id}`} className="mb-task-anchor">
+                  <TaskCard task={t} />
+                </div>
               ))}
             </Stack>
           </section>

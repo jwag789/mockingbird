@@ -144,3 +144,13 @@ create table if not exists practice_attempts (
   feedback   jsonb  not null,
   created_at timestamptz not null default now()
 );
+
+-- The real interview the user is preparing for. The dashboard counts down to
+-- it and paces the open practice tasks across the days left.
+create table if not exists upcoming_interviews (
+  user_id      text primary key references "user" (id) on delete cascade,
+  company      text not null,
+  role_title   text not null,
+  interview_on date not null,
+  updated_at   timestamptz not null default now()
+);
