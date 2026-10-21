@@ -4,7 +4,8 @@ import { NextResponse, type NextRequest } from "next/server";
 // A fast, cookie-only gate. Real checks happen in each route handler,
 // which load the session and scope every query to its user.
 export function proxy(request: NextRequest) {
-  if (getSessionCookie(request)) return NextResponse.next();
+  // The home page is the landing page for visitors, so it's always open.
+  if (getSessionCookie(request) || request.nextUrl.pathname === "/") return NextResponse.next();
 
   if (request.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });

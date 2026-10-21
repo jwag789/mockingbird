@@ -10,7 +10,7 @@ const PROVIDER_LABELS = { google: "Continue with Google", github: "Continue with
 export function SignInForm({ providers }: { providers: Array<keyof typeof PROVIDER_LABELS> }) {
   const params = useSearchParams();
   const next = safeNext(params.get("next"));
-  const [mode, setMode] = useState("sign-in");
+  const [mode, setMode] = useState(params.get("mode") === "sign-up" ? "sign-up" : "sign-in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
