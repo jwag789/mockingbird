@@ -4,6 +4,7 @@ import { Badge, Button, Card, Progress } from "@tessera/react";
 import Link from "next/link";
 import type { DashboardData } from "@/lib/dashboard";
 import { SKILLS } from "@/lib/practice/skills";
+import { COMPETENCIES, COMPETENCY_IDS } from "@/lib/stories/competencies";
 import type { Dimension } from "@/lib/scoring/types";
 import { useNow } from "../useNow";
 import { NextInterview } from "./NextInterview";
@@ -22,7 +23,7 @@ const KIND = { watch: "Watch", read: "Read", drill: "Drill", challenge: "Challen
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
 export function Dashboard({ data, name }: { data: DashboardData; name: string }) {
-  const { history, recent, upNext, openTasks, latestPlan, week, streak, upcoming } = data;
+  const { history, recent, upNext, openTasks, latestPlan, week, streak, upcoming, stories } = data;
   const latest = history.at(-1);
   const previous = history.at(-2);
   const delta = latest && previous ? Math.round((latest.overall - previous.overall) * 10) / 10 : null;
@@ -139,6 +140,7 @@ export function Dashboard({ data, name }: { data: DashboardData; name: string })
               )}
             </Card>
 
+            <div className="mb-dash-side">
             {weakest && (
               <Card variant="tile" className="mb-dash-lever">
                 <span className="mb-dash-label">Biggest lever</span>
@@ -153,6 +155,23 @@ export function Dashboard({ data, name }: { data: DashboardData; name: string })
                 <Link href="/practice">Practice it →</Link>
               </Card>
             )}
+            <Card variant="raised" className="mb-dash-stories">
+              <span className="mb-dash-label">Story bank</span>
+              <div className="mb-hero-figure mb-hero-small">
+                <strong>{stories.count}</strong>
+                <span>
+                  {stories.count === 1 ? "story" : "stories"} · {stories.covered}/{COMPETENCY_IDS.length} competencies
+                </span>
+              </div>
+              {stories.missing.length > 0 && (
+                <p>
+                  No story yet for {stories.missing.slice(0, 3).map((c) => COMPETENCIES[c].label.toLowerCase()).join(", ")}
+                  {stories.missing.length > 3 ? ` and ${stories.missing.length - 3} more` : ""}.
+                </p>
+              )}
+              <Link href="/stories">Open your stories →</Link>
+            </Card>
+            </div>
           </section>
 
           <section aria-labelledby="trend-title">

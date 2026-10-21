@@ -154,3 +154,39 @@ create table if not exists upcoming_interviews (
   interview_on date not null,
   updated_at   timestamptz not null default now()
 );
+
+-- Story bank: the real experiences a user tells in interviews, pulled out of
+-- their answers so they can see which stories are strong, which need work,
+-- and which competencies have no story yet.
+create table if not exists stories (
+  id           bigserial primary key,
+  user_id      text not null references "user" (id) on delete cascade,
+  title        text not null,
+  summary      text not null,
+  situation    text not null default '',
+  action       text not null default '',
+  result       text not null default '',
+  competencies text[] not null default '{}',
+  -- Concrete figures the user has actually said for this story.
+  numbers      text[] not null default '{}',
+  notes        text not null default '',
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create index if not exists stories_user_idx on stories (user_id, updated_at desc);
+
+-- Each time a story was told: where, the scores that answer got, and a quote.
+create table if not exists story_mentions (
+  id          bigserial primary key,
+  story_id    bigint not null references stories (id) on delete cascade,
+  user_id     text   not null references "user" (id) on delete cascade,
+  session_id  uuid   not null references sessions (id) on delete cascade,
+  question_id text   not null,
+  question    text   not null,
+  quote       text   not null default '',
+  scores      jsonb  not null,
+  score       real   not null,
+  created_at  timestamptz not null default now(),
+  unique (story_id, session_id, question_id)
+);

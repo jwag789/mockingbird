@@ -16,6 +16,7 @@ export function UserMenu() {
       <nav className="mb-nav">
         <Link href="/">Dashboard</Link>
         <Link href="/practice">Practice</Link>
+        <Link href="/stories">Stories</Link>
         <Link href="/new">New interview</Link>
       </nav>
       <DropdownMenu

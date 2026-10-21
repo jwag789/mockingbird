@@ -1,6 +1,6 @@
 import type { Pool, PoolClient } from "pg";
 
-export type JobType = "score-session" | "build-plan" | "refresh-resources";
+export type JobType = "score-session" | "build-plan" | "extract-stories" | "refresh-resources";
 
 export type Job = {
   id: string;

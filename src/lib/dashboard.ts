@@ -3,6 +3,9 @@ import { pool } from "./db";
 import { listSessions } from "./interview/conductor";
 import { listPlans, type TaskView } from "./practice/store";
 import { DIMENSIONS, type Dimension } from "./scoring/types";
+import type { Competency } from "./stories/competencies";
+import { coverage } from "./stories/insights";
+import { listStories } from "./stories/store";
 
 export type InterviewPoint = {
   id: string;
@@ -25,12 +28,13 @@ export type DashboardData = {
   /** Consecutive days, ending today or yesterday, with an interview or practice. */
   streak: number;
   upcoming: UpcomingInterview | null;
+  stories: { count: number; covered: number; missing: Competency[] };
 };
 
 const HISTORY_LIMIT = 12;
 
 export async function getDashboard(userId: string): Promise<DashboardData> {
-  const [history, recent, plans, week, activity, upcoming] = await Promise.all([
+  const [history, recent, plans, week, activity, upcoming, stories] = await Promise.all([
     pool.query(
       `select s.id, s.created_at, s.role_title,
               (r.summary->>'overallScore')::float as overall,
@@ -64,7 +68,9 @@ export async function getDashboard(userId: string): Promise<DashboardData> {
       "select company, role_title, to_char(interview_on, 'YYYY-MM-DD') as interview_on from upcoming_interviews where user_id = $1",
       [userId],
     ),
+    listStories(userId),
   ]);
+  const storyCoverage = coverage(stories);
 
   const ready = plans.filter((p) => p.status === "ready");
   const open = ready.flatMap((p) => p.tasks.filter((t) => t.status === "todo").map((t) => ({ ...t, roleTitle: p.roleTitle })));
@@ -100,6 +106,11 @@ export async function getDashboard(userId: string): Promise<DashboardData> {
     upcoming: upcoming.rows[0]
       ? { company: upcoming.rows[0].company, roleTitle: upcoming.rows[0].role_title, interviewOn: upcoming.rows[0].interview_on }
       : null,
+    stories: {
+      count: stories.length,
+      covered: storyCoverage.filter((c) => c.story).length,
+      missing: storyCoverage.filter((c) => !c.story).map((c) => c.competency),
+    },
   };
 }
 

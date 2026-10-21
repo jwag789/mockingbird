@@ -15,7 +15,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "resources:refresh": "node --env-file=.env.local --import tsx scripts/refresh-resources.ts",
-    "claim-interviews": "node --env-file=.env.local --import tsx scripts/claim-interviews.ts"
+    "claim-interviews": "node --env-file=.env.local --import tsx scripts/claim-interviews.ts",
+    "stories:backfill": "node --env-file=.env.local --import tsx scripts/backfill-stories.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

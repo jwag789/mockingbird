@@ -7,6 +7,7 @@ import { JOBS_CHANNEL, claimNext, complete, fail, requeueStale, type Job } from 
 import { buildPlan, queuePlan } from "../lib/practice/coach";
 import { refreshResources, scheduleResourceRefresh } from "../lib/practice/resources/refresh";
 import { scoreSession } from "../lib/scoring/score";
+import { extractStories, queueStories } from "../lib/stories/extract";
 
 const POLL_MS = 5_000;
 const SCHEDULE_EVERY_MS = 60 * 60_000;
@@ -18,11 +19,17 @@ const handlers: Record<Job["type"], (job: Job) => Promise<void>> = {
     log(`scored session ${sessionId}: ${report.summary.overallScore}/5`);
     // The scorecard is saved; a problem queuing the plan mustn't re-run scoring.
     await queuePlan(sessionId).catch((err) => log(`couldn't queue plan for ${sessionId}: ${err.message}`));
+    await queueStories(sessionId).catch((err) => log(`couldn't queue stories for ${sessionId}: ${err.message}`));
   },
   "build-plan": async (job) => {
     const { sessionId } = job.payload as { sessionId: string };
     const count = await buildPlan(sessionId);
     log(`built practice plan for ${sessionId}: ${count} tasks`);
+  },
+  "extract-stories": async (job) => {
+    const { sessionId } = job.payload as { sessionId: string };
+    const { created, updated } = await extractStories(sessionId);
+    log(`stories for ${sessionId}: ${created} new, ${updated} updated`);
   },
   "refresh-resources": async () => {
     await refreshResources(undefined, (msg) => log(`resources: ${msg}`));
