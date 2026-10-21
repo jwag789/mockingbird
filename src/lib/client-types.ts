@@ -2,6 +2,7 @@
 import type { SessionStatus } from "./interview/conductor";
 import type { InterviewState, Stage, Turn } from "./interview/types";
 import type { ScoringProgress } from "./scoring/progress";
+import type { ClipWord } from "./scoring/talk-time";
 import type { Report } from "./scoring/types";
 
 export type SessionView = {
@@ -21,6 +22,8 @@ export type SessionResponse = {
   report: Report | null;
   /** Live scoring progress, while the worker is scoring. */
   progress: ScoringProgress | null;
+  /** Spoken answers with a playback clip, keyed by turn seq. */
+  clips: Record<number, { durationMs: number; words: ClipWord[] }>;
 };
 
 export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {

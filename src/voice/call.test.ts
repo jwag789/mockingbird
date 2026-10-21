@@ -21,7 +21,7 @@ function setup(reply: Partial<Turn> = {}) {
       );
     }),
     getTurns: vi.fn(async () => [...turns]),
-    recordTalkTime: vi.fn(async () => {}),
+    recordAnswer: vi.fn(async () => {}),
   };
   const stt = { sendAudio: vi.fn(), endTurn: vi.fn(), close: vi.fn() };
   const tts = { speak: vi.fn(), clear: vi.fn(), close: vi.fn() };
@@ -56,8 +56,9 @@ describe("VoiceCall", () => {
     await call.onStt(ev("EndOfTurn", 0, "So I told my manager we needed two more weeks", 5500));
 
     expect(interview.submitAnswer).toHaveBeenCalledWith("s1", "So I told my manager we needed two more weeks");
-    // 10 words, first starts at 1000ms, last ends at 1300 + 9 * 400.
-    expect(interview.recordTalkTime).toHaveBeenCalledWith("s1", expect.any(String), 3900);
+    // The answer's word timings go along, for talk time and playback.
+    expect(interview.recordAnswer).toHaveBeenCalledWith("s1", expect.any(String), expect.arrayContaining([expect.objectContaining({ startMs: 1000 })]));
+    expect((interview.recordAnswer.mock.calls[0] as unknown[])[2]).toHaveLength(10);
     expect(tts.speak).toHaveBeenCalledWith(FOLLOW_UP);
     expect(states()).toEqual(["listening", "thinking", "speaking"]);
     expect(sent).toContainEqual({ type: "session_updated" });

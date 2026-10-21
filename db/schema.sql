@@ -190,3 +190,10 @@ create table if not exists story_mentions (
   created_at  timestamptz not null default now(),
   unique (story_id, session_id, question_id)
 );
+
+-- Playback for spoken answers: the answer's audio (MP3, 16 kHz mono) and its
+-- word timings in ms from the start of the clip.
+alter table answer_audio add column if not exists audio bytea;
+alter table answer_audio add column if not exists mime text;
+alter table answer_audio add column if not exists duration_ms int;
+alter table answer_audio add column if not exists words jsonb;

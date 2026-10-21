@@ -9,10 +9,11 @@ import { getUser } from "../lib/auth";
 import { ClaudeOutputError } from "../lib/claude";
 import { pool } from "../lib/db";
 import { ConflictError, NotFoundError, assertOwner, getSession, getTurns, submitAnswer } from "../lib/interview/conductor";
-import { recordTalkTime } from "../lib/scoring/talk-time";
+import { recordAnswerAudio, recordTalkTime } from "../lib/scoring/talk-time";
 import { VoiceCall } from "./call";
-import { connectAura, connectFlux } from "./deepgram";
+import { connectAura, connectFlux, type SpeechToText, type SttWord } from "./deepgram";
 import { MIC_SAMPLE_RATES, type ClientMessage, type ServerMessage } from "./protocol";
+import { AnswerRecorder, CLIP_RATE, encodeMp3 } from "./recorder";
 
 const PORT = Number(process.env.VOICE_PORT ?? 3001);
 // Only the app may open calls: each one spends Deepgram and Claude credit.
@@ -87,7 +88,10 @@ async function openCall(
     send({ type: "error", message: "The speech service had a problem. Check the voice server logs." });
   };
 
-  const stt = connectFlux({
+  // Everything sent to speech-to-text is also kept, on the same clock as its
+  // word timings, so each answer can be cut out for playback.
+  const recorder = new AnswerRecorder(sampleRate);
+  const flux = connectFlux({
     apiKey: API_KEY!,
     sampleRate,
     eotThreshold: envNumber("VOICE_EOT_THRESHOLD"),
@@ -99,6 +103,37 @@ async function openCall(
     onError,
     log: (msg) => callLog({ event: "flux", msg }),
   });
+  const stt: SpeechToText = {
+    sendAudio: (pcm) => {
+      recorder.append(pcm);
+      flux.sendAudio(pcm);
+    },
+    endTurn: () => flux.endTurn(),
+    close: () => flux.close(),
+  };
+
+  const recordAnswer = async (sid: string, answer: string, words: SttWord[]) => {
+    const first = words[0];
+    const last = words.at(-1)!;
+    // Talk time first: if this answer ended the interview, the worker is about to score it.
+    await recordTalkTime(sid, answer, Math.round(last.endMs - first.startMs));
+    // The clip can follow once the reply is underway.
+    const startMs = Math.max(first.startMs - 300, recorder.keptFromMs);
+    const pcm = recorder.clip(startMs, last.endMs + 400);
+    if (pcm.length === 0) return;
+    void encodeMp3(pcm)
+      .then((audio) =>
+        recordAnswerAudio(sid, answer, {
+          audio,
+          mime: "audio/mpeg",
+          durationMs: Math.round((pcm.length / CLIP_RATE) * 1000),
+          words: words.map((w) => ({ w: w.word, s: Math.round(w.startMs - startMs), e: Math.round(w.endMs - startMs) })),
+        }),
+      )
+      .then(() => callLog({ event: "answer_clip_saved", ms: Math.round((pcm.length / CLIP_RATE) * 1000) }))
+      .catch((err) => callLog({ event: "answer_clip_error", error: String(err) }));
+  };
+
   const tts = connectAura({
     apiKey: API_KEY!,
     voice: process.env.VOICE_TTS_MODEL,
@@ -112,7 +147,7 @@ async function openCall(
     sessionId,
     stt,
     tts,
-    interview: { submitAnswer, getTurns, recordTalkTime },
+    interview: { submitAnswer, getTurns, recordAnswer },
     send,
     sendAudio: (pcm) => socket.readyState === socket.OPEN && socket.send(pcm, { binary: true }),
     describeError,

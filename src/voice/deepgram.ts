@@ -5,13 +5,15 @@
 import WebSocket, { type RawData } from "ws";
 import { TTS_SAMPLE_RATE } from "./protocol";
 
+export type SttWord = { word: string; startMs: number; endMs: number };
+
 export type SttEvent = {
   event: "StartOfTurn" | "Update" | "EagerEndOfTurn" | "TurnResumed" | "EndOfTurn";
   /** Unique for the whole call, even across reconnects. */
   turnIndex: number;
   transcript: string;
   /** Word timings in ms from the start of the call's audio. */
-  words: Array<{ word: string; startMs: number; endMs: number }>;
+  words: SttWord[];
   /** Ms of audio sent to Deepgram when this event arrived, on the same clock as `words`. */
   audioSentMs: number;
 };

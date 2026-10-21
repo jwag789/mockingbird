@@ -10,14 +10,15 @@
 // The interview logic isn't here: an answer goes through the same
 // submitAnswer() as text mode, and the reply is whatever turn it saved.
 import type { Turn } from "../lib/interview/types";
-import type { SpeechToText, SttEvent, TextToSpeech } from "./deepgram";
+import type { SpeechToText, SttEvent, SttWord, TextToSpeech } from "./deepgram";
 import { isEcho } from "./echo";
 import type { ClientMessage, ServerMessage, TurnLatency, VoiceState } from "./protocol";
 
 export type InterviewPort = {
   submitAnswer(sessionId: string, answer: string): Promise<void>;
   getTurns(sessionId: string): Promise<Turn[]>;
-  recordTalkTime(sessionId: string, answer: string, talkMs: number): Promise<void>;
+  /** Talk time, and the audio for playback, for an answer that was just saved. */
+  recordAnswer(sessionId: string, answer: string, words: SttWord[]): Promise<void>;
 };
 
 export type CallDeps = {
@@ -168,7 +169,6 @@ export class VoiceCall {
     const first = ev.words[0];
     const last = ev.words.at(-1);
     const endOfTurnMs = last ? Math.max(0, Math.round(ev.audioSentMs - last.endMs)) : null;
-    const talkMs = first && last ? Math.round(last.endMs - first.startMs) : null;
 
     this.setState("thinking");
     this.deps.send({ type: "answer", text: ev.transcript });
@@ -179,10 +179,10 @@ export class VoiceCall {
       await this.deps.interview.submitAnswer(this.deps.sessionId, ev.transcript);
       conductorMs = this.now() - endedAt;
       // Save it before replying: if this answer ended the interview, the worker is about to score it.
-      if (talkMs != null) {
+      if (first && last) {
         await this.deps.interview
-          .recordTalkTime(this.deps.sessionId, ev.transcript, talkMs)
-          .catch((err) => this.deps.log({ event: "talk_time_error", error: String(err) }));
+          .recordAnswer(this.deps.sessionId, ev.transcript, ev.words)
+          .catch((err) => this.deps.log({ event: "answer_record_error", error: String(err) }));
       }
       reply = (await this.deps.interview.getTurns(this.deps.sessionId)).at(-1);
     } catch (err) {

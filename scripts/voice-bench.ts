@@ -6,12 +6,14 @@
 //   npm run voice            # terminal 1
 //   npm run voice:bench      # terminal 2
 //
-// The throwaway user and session are deleted at the end.
+// The throwaway user and session are deleted at the end. To keep the
+// interview instead (to try playback on its scorecard), give it to an account:
+//   VOICE_BENCH_KEEP_FOR=you@example.com npm run voice:bench
 import { randomUUID } from "node:crypto";
 import WebSocket from "ws";
 import { auth } from "../src/lib/auth";
 import { pool } from "../src/lib/db";
-import { startSession } from "../src/lib/interview/conductor";
+import { endSession, startSession } from "../src/lib/interview/conductor";
 import { MIC_SAMPLE_RATE, TTS_SAMPLE_RATE, type ServerMessage, type TurnLatency } from "../src/voice/protocol";
 
 const VOICE_URL = process.env.VOICE_URL ?? `ws://localhost:${process.env.VOICE_PORT ?? 3001}`;
@@ -61,7 +63,24 @@ async function main() {
     const { results, firstQuestionMs, bargeInMs } = await runCall(sessionId, answers, cookie);
     report(results, firstQuestionMs, bargeInMs);
   } finally {
-    // Deleting the user cascades to the session and its turns.
+    const keepFor = process.env.VOICE_BENCH_KEEP_FOR;
+    if (keepFor) {
+      // Hand the interview over before deleting the throwaway user, then end it so it gets scored.
+      const { rowCount } = await pool.query(
+        `update sessions set user_id = (select id from "user" where email = $1) where id = $2
+            and exists (select 1 from "user" where email = $1)`,
+        [keepFor, sessionId],
+      );
+      if (rowCount) {
+        // Give the voice server a moment to save the last answer's clip.
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await endSession(sessionId);
+        console.log(`Kept the interview for ${keepFor}: /interview/${sessionId}/report`);
+      } else {
+        console.log(`No account for ${keepFor}; the interview was deleted.`);
+      }
+    }
+    // Deleting the user cascades to the session and its turns (unless handed over).
     await pool.query(`delete from "user" where id = $1`, [user.id]);
     await pool.end();
   }

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { fetchJson, type SessionResponse } from "@/lib/client-types";
 import type { ScoringProgress } from "@/lib/scoring/progress";
 import { PracticePlan } from "./practice/PracticePlan";
+import { AnswerPlayback } from "./AnswerPlayback";
 import { ScoringLive } from "./ScoringLive";
 import { STAGE_LABELS } from "@/lib/interview/stages";
 import type { AnswerMetrics } from "@/lib/scoring/metrics";
@@ -154,7 +155,15 @@ export function Scorecard({ id }: { id: string }) {
       <Stack gap={4}>
         <h2 className="mb-section-title">Question by question</h2>
         {questions.map((q, i) => (
-          <QuestionCard key={q.questionId} q={q} index={i} />
+          <QuestionCard
+            key={q.questionId}
+            q={q}
+            index={i}
+            sessionId={id}
+            recordings={data.turns
+              .filter((t) => t.questionId === q.questionId && t.speaker === "candidate" && data.clips?.[t.seq])
+              .map((t) => ({ seq: t.seq, ...data.clips[t.seq] }))}
+          />
         ))}
       </Stack>
 
@@ -209,8 +218,19 @@ function SpeakingMetrics({ metrics }: { metrics: AnswerMetrics }) {
   );
 }
 
-function QuestionCard({ q, index }: { q: QuestionReport; index: number }) {
+function QuestionCard({
+  q,
+  index,
+  sessionId,
+  recordings,
+}: {
+  q: QuestionReport;
+  index: number;
+  sessionId: string;
+  recordings: Array<{ seq: number; durationMs: number; words: Array<{ w: string; s: number; e: number }> }>;
+}) {
   const avg = q.dimensions.reduce((a, d) => a + d.score, 0) / q.dimensions.length;
+  const quotes = q.dimensions.flatMap((d) => d.evidence);
   return (
     <Card
       eyebrow={`Q${index + 1} · ${STAGE_LABELS[q.stage]} · ${q.competency}`}
@@ -219,6 +239,22 @@ function QuestionCard({ q, index }: { q: QuestionReport; index: number }) {
       variant="raised"
     >
       <Stack gap={5}>
+        {recordings.length > 0 && (
+          <div className="mb-recordings">
+            <h3 className="mb-section-title">Hear your answer</h3>
+            {recordings.map((r, i) => (
+              <AnswerPlayback
+                key={r.seq}
+                sessionId={sessionId}
+                seq={r.seq}
+                label={i === 0 ? "Your answer" : `Follow-up answer ${i}`}
+                durationMs={r.durationMs}
+                words={r.words}
+                quotes={quotes}
+              />
+            ))}
+          </div>
+        )}
         <div>
           {q.dimensions.map((d) => (
             <div key={d.dimension} className="mb-dimension">

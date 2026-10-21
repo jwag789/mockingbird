@@ -49,7 +49,8 @@ export function VoicePanel({
             </Alert>
           )}
           <p className="mb-muted" style={{ margin: 0 }}>
-            The interviewer speaks its questions and listens to your answers. Headphones work best.
+            The interviewer speaks its questions and listens to your answers. Headphones work best. Your
+            spoken answers are recorded so you can play them back on your scorecard.
           </p>
         </Stack>
       ) : (

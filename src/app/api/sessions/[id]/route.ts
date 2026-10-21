@@ -3,6 +3,7 @@ import { errorResponse, isUuid, requireUser } from "@/lib/api";
 import { pool } from "@/lib/db";
 import type { SessionView } from "@/lib/client-types";
 import { assertOwner, getSession } from "@/lib/interview/conductor";
+import { getAnswerClips } from "@/lib/scoring/talk-time";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -32,6 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       turns,
       report: rows[0] ?? null,
       progress: session.progress,
+      clips: await getAnswerClips(id),
     });
   } catch (err) {
     return errorResponse(err);

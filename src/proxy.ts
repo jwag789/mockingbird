@@ -16,5 +16,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Everything except auth endpoints, the sign-in page and static assets.
-  matcher: ["/((?!api/auth|sign-in|_next/static|_next/image|icon.svg|apple-icon.png|brand/|voice-capture.worklet.js).*)"],
+  matcher: ["/((?!api/auth|sign-in|_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|brand/|voice-capture.worklet.js).*)"],
 };

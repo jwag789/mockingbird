@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",
+    "@breezystack/lamejs": "^1.2.7",
     "@tessera/react": "file:vendor/tessera-react-0.1.0.tgz",
     "@tessera/tokens": "file:vendor/tessera-tokens-0.1.0.tgz",
     "better-auth": "^1.7.11",
